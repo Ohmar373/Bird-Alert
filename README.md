@@ -1,6 +1,6 @@
-# 🐦 Bird-Alert
+# 🐦 BirdAlert
 
-Bird-Alert is a community-driven birdwatching web application built with **Python** and **Django**. It allows birdwatchers to log sightings, upload photos or descriptions, and record when and where birds are observed. By sharing verified sightings, Bird-Alert helps users discover proven birdwatching locations and identify observation patterns over time.
+BirdAlert is a community-driven birdwatching web application built with **Python** and **Django**. It allows birdwatchers to log sightings, upload photos or descriptions, and record when and where birds are observed. By sharing verified sightings, Bird-Alert helps users discover proven birdwatching locations and identify observation patterns over time.
 
 This project is developed as a **Computer Science senior project** with an emphasis on full-stack web development, database design, and real-world data sharing.
 
@@ -51,7 +51,7 @@ Bird-Alert/
 
 ## 🧠 Project Motivation
 
-Birdwatching often relies on word-of-mouth or scattered online forums to locate birds in specific regions. Bird-Alert centralizes this information into a single platform where users can contribute verified sightings, making birdwatching more accessible, collaborative, and data-driven.
+Birdwatching often relies on word-of-mouth or scattered online forums to locate birds in specific regions. BirdAlert centralizes this information into a single platform where users can contribute verified sightings, making birdwatching more accessible, collaborative, and data-driven.
 
 ---
 

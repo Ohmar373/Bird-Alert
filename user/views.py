@@ -8,15 +8,15 @@ from django.core.mail import send_mail
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import get_template
 from django.template import Context
-
+from django.shortcuts import render
 
 # Create your views here.
 
-#index view#
+# index view
 def index(request):
     return render(request, 'user/index.html', {'title': 'index'})
 
-#register view#
+# register view
 def register(request):
     if request.method == 'POST':
         form = UserRegisterForm(request.POST)
@@ -24,9 +24,9 @@ def register(request):
             form.save()
             username = form.cleaned_data.get('username')
             email = form.cleaned_data.get('email')
-            #mailing functionality#
+            # mailing functionality
             htmly = get_template('user/Email.html')
-            d = { 'username': username }
+            d = {'username': username}
             subject, from_email, to = 'Welcome to Bird Alert!', 'birdalert2026@gmail.com', email
             html_content = htmly.render(d)
             text_content = f'Account created for {username} you can now log in.'
@@ -40,21 +40,24 @@ def register(request):
         form = UserRegisterForm()
     return render(request, 'user/register.html', {'form': form, 'title': 'Register Here'})
 
-#login view#
+# login view
 def Login(request):
     if request.method == 'POST':
-      
-            username = request.POST['username']
-            password = request.POST['password']
-            user = authenticate(request, username = username, password = password)
-            if user is not None:
-                form = login(request, user)
-                messages.success(request, f'Welcome {username}!!')
-                return redirect('index')
-            else:
-                messages.info(request, f'Username OR password is incorrect')
-            form = AuthenticationForm()
-            return render(request, 'user/login.html', {'form':form, 'title': 'Login Here'})
+        username = request.POST['username']
+        password = request.POST['password']
+        user = authenticate(request, username=username, password=password)
+        if user is not None:
+            form = login(request, user)
+            messages.success(request, f'Welcome {username}!!')
+            return redirect('index')
+        else:
+            messages.info(request, f'Username OR password is incorrect')
+        form = AuthenticationForm()
+        return render(request, 'user/login.html', {'form': form, 'title': 'Login Here'})
     else:
         form = AuthenticationForm()
-        return render(request, 'user/login.html', {'form':form, 'title': 'Login Here'})
+        return render(request, 'user/login.html', {'form': form, 'title': 'Login Here'})
+
+# map view
+def map_view(request):
+    return render(request, "user/map.html")
