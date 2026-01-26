@@ -74,6 +74,19 @@
       color: #666;
     }
 
+    .add-sighting-btn {
+      background: none;
+      border: none;
+      color: #333;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: color 0.3s;
+    }
+
+    .add-sighting-btn:hover {
+      color: #666;
+    }
+
     .container {
       max-width: 1200px;
       margin: 4rem auto;
@@ -127,10 +140,11 @@
 <body>
   <header>
     <nav>
-      <a href="{% url 'index' %}" class="brand">🐦 Bird Alert</a>
+      <a href="{% url 'index' %}" class="brand">🐦 BirdAlert</a>
       <ul class="nav-links">
         <li><a href="{% url 'index' %}">Home</a></li>
         {% if user.is_authenticated %}
+        <li><a href="{% url 'map' %}" class="add-sighting-btn">+ Add Sighting</a></li>
         <li>
           <form method="post" action="{% url 'logout' %}" style="display: inline;">
             {% csrf_token %}
@@ -155,9 +169,9 @@
     <section class="welcome-section">
       {% block start %}
       {% if user.is_authenticated %}
-      <h1>Welcome back, {{user.username}}! 👋</h1>
+      <h1>Welcome back, {{user.username}}!</h1>
       {% else %}
-      <h1>Hello! 👋</h1>
+      <h1>Hello!</h1>
       <p>Log in or sign up to get started</p>
       {% endif %}
       {% endblock %}
