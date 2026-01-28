@@ -1,0 +1,128 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Bird Alert Map</title>
+
+  <!--Leaflet CSS -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  />
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #faf8f3;
+    }
+
+    header {
+      background-color: #fff;
+      border-bottom: 2px solid #e0ddd7;
+      padding: 1.5rem 0;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 2rem;
+    }
+
+    .brand {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: #333;
+      text-decoration: none;
+      transition: color 0.3s;
+    }
+
+    .brand:hover {
+      color: #666;
+    }
+
+    .title {
+      text-align: center;
+      margin: 1.5rem 0;
+      font-size: 1.5rem;
+      color: #333;
+      font-weight: 600;
+    }
+
+    #map {
+      height: 80vh;
+      width: 100%;
+    }
+
+    @media (max-width: 768px) {
+      nav {
+        padding: 0 1rem;
+      }
+
+      .brand {
+        font-size: 1.2rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <nav>
+    <a href="{% url 'index' %}" class="brand">🐦 BirdAlert</a>
+  </nav>
+</header>
+
+<h2 class="title">Bird Sightings Map</h2>
+<div id="map"></div>
+
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+
+  const map = L.map('map').setView([26.3017, -98.1633], 13);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap contributors'
+  }).addTo(map);
+
+  let marker;
+
+map.on('click', function (e) {
+    var lat = e.latlng.lat;
+    var lng = e.latlng.lng;
+
+    var baseUrl = "{% url 'sightings:sighting_form' %}";
+    var addUrl = baseUrl + "?lat=" + lat + "&lng=" + lng;
+
+    L.popup()
+      .setLatLng(e.latlng)
+      .setContent(`
+          <div style="text-align:center;">
+              <p>New Sighting Here?</p>
+              <a href="{% url 'sightings:sighting_form' %}?lat={{ lat }}&lng={{ lng }}" class="btn btn-primary text-white" style="background-color: #00a2ff; color: white; padding: 8px 12px; border-radius: 4px; text-decoration: none; display: inline-block;">
+                Add my Sighting
+              </a>
+          </div>
+      `)
+      .openOn(map);
+});
+
+</script>
+
+</body>
+</html>
