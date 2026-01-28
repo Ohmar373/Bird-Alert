@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
   <title>Bird Alert Map</title>
 
-  <!-- Leaflet CSS -->
+  <!--Leaflet CSS -->
   <link
     rel="stylesheet"
     href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
@@ -102,15 +102,26 @@
 
   let marker;
 
-  map.on('click', function (e) {
-    if (marker) {
-      map.removeLayer(marker);
-    }
-    marker = L.marker(e.latlng).addTo(map);
+map.on('click', function (e) {
+    var lat = e.latlng.lat;
+    var lng = e.latlng.lng;
 
-    console.log("Lat:", e.latlng.lat);
-    console.log("Lng:", e.latlng.lng);
-  });
+    var baseUrl = "{% url 'sightings:sighting_form' %}";
+    var addUrl = baseUrl + "?lat=" + lat + "&lng=" + lng;
+
+    L.popup()
+      .setLatLng(e.latlng)
+      .setContent(`
+          <div style="text-align:center;">
+              <p>New Sighting Here?</p>
+              <a href="{% url 'sightings:sighting_form' %}?lat={{ lat }}&lng={{ lng }}" class="btn btn-primary text-white" style="background-color: #00a2ff; color: white; padding: 8px 12px; border-radius: 4px; text-decoration: none; display: inline-block;">
+                Add my Sighting
+              </a>
+          </div>
+      `)
+      .openOn(map);
+});
+
 </script>
 
 </body>

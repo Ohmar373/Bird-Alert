@@ -144,7 +144,7 @@
       <ul class="nav-links">
         <li><a href="{% url 'index' %}">Home</a></li>
         {% if user.is_authenticated %}
-        <li><a href="{% url 'map' %}" class="add-sighting-btn">+ Add Sighting</a></li>
+        <li><a href="{% url 'add_sighting' %}" class="add-sighting-btn">+ Add Sighting</a></li>
         <li>
           <form method="post" action="{% url 'logout' %}" style="display: inline;">
             {% csrf_token %}

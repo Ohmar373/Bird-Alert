@@ -57,7 +57,10 @@ def Login(request):
     else:
         form = AuthenticationForm()
         return render(request, 'user/login.html', {'form': form, 'title': 'Login Here'})
+        return render(request, 'user/login.html', {'form': form, 'title': 'Login Here'})
 
-# map view
-def map_view(request):
-    return render(request, "user/map.html")
+
+# sightings view
+@login_required
+def sightings(request):
+    return render(request, 'user/sightings.html')
