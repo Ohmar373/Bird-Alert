@@ -52,8 +52,13 @@ def Login(request):
             return redirect('index')
         else:
             messages.info(request, f'Username OR password is incorrect')
-    form = AuthenticationForm()
-    return render(request, 'user/login.html', {'form': form, 'title': 'Login Here'})
+        form = AuthenticationForm()
+        return render(request, 'user/login.html', {'form': form, 'title': 'Login Here'})
+    else:
+        form = AuthenticationForm()
+        return render(request, 'user/login.html', {'form': form, 'title': 'Login Here'})
+        return render(request, 'user/login.html', {'form': form, 'title': 'Login Here'})
+
 
 # sightings view
 @login_required
