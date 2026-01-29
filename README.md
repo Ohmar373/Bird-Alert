@@ -25,7 +25,7 @@ This project is developed as a **Computer Science senior project** with an empha
 ## 🛠️ Tech Stack
 
 * **Backend:** Python, Django
-* **Frontend:** HTML, CSS, Django Templates (future support for JS frameworks)
+* **Frontend:** HTML, CSS, Django Templates, JavaScript
 * **Database:** SQLite (development), PostgreSQL (planned)
 * **Authentication:** Django Auth System
 * **Version Control:** Git & GitHub
@@ -84,7 +84,7 @@ This project focuses on applying core computer science and software engineering 
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/your-username/Bird-Alert.git
+   git clone https://github.com/Ohmar373/Bird-Alert.git
    ```
 
 2. Navigate into the project directory:
@@ -129,7 +129,9 @@ This project focuses on applying core computer science and software engineering 
 ## 👤 Author
 
 **Omar Alanis**
-Computer Science Student
+**Adam Garcia**
+**Alejandro Barragan**
+Computer Science Students
 Senior Project – 2025–2026
 
 ---
