@@ -5,6 +5,10 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{title}}</title>
+  
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  
   <style>
     * {
       margin: 0;
@@ -120,6 +124,90 @@
       color: #155724;
     }
 
+    .sightings-section {
+      max-width: 800px;
+      margin: 3rem auto;
+      padding: 0 1rem;
+    }
+
+    .sighting-card {
+      background: white;
+      border-radius: 8px;
+      padding: 2.5rem;
+      margin-bottom: 4.5rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      border-left: 4px solid #00a2ff;
+    }
+
+    .sighting-header {
+      margin-bottom: 1rem;
+    }
+
+    .sighting-header h3 {
+      margin: 0;
+      color: #333;
+      font-size: 1.3rem;
+    }
+
+    .scientific-name {
+      font-size: 0.85rem;
+      color: #999;
+      font-style: italic;
+      font-weight: 400;
+    }
+
+    .sighting-meta {
+      color: #999;
+      font-size: 0.875rem;
+      margin: 0.5rem 0 0 0;
+    }
+
+    .sighting-details {
+      background-color: #f9f9f9;
+      padding: 1rem;
+      border-radius: 4px;
+      margin: 1rem 0;
+      font-size: 0.95rem;
+    }
+
+    .sighting-details p {
+      margin: 0.5rem 0;
+      color: #555;
+    }
+
+    .sighting-actions {
+      display: flex;
+      gap: 1rem;
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid #e0ddd7;
+    }
+
+    .action-btn {
+      flex: 1;
+      padding: 0.5rem;
+      border: 1px solid #e0ddd7;
+      background-color: white;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: all 0.3s;
+    }
+
+    .action-btn:hover {
+      background-color: #f0f0f0;
+      border-color: #00a2ff;
+    }
+    
+    .sighting-map {
+      height: 250px;
+      width: 35%;
+      float: right;
+      margin: -6.3rem 0.5rem 1rem 1rem;
+      border-radius: 4px;
+      z-index: 10;
+    }
+
     @media (max-width: 768px) {
       .nav-links {
         gap: 1rem;
@@ -176,7 +264,67 @@
       {% endif %}
       {% endblock %}
     </section>
+
+    {% if user.is_authenticated %}
+    <section class="sightings-section">
+      <h2 style="text-align: center; margin-bottom: 2rem; color: #333;">Recent Bird Sightings</h2>
+      
+      {% if sightings %}
+        {% for sighting in sightings %}
+        <div class="sighting-card">
+          <div class="sighting-header">
+            <div>
+              <h3>{{ sighting.bird_species.common_name }} <span class="scientific-name">({{ sighting.bird_species.scientific_name }})</span></h3>
+              <p class="sighting-meta">by {{ sighting.user.username }} • {{ sighting.timestamp|date:"M d, Y \a\t g:i A" }}</p>
+            </div>
+          </div>
+          
+          <div class ="sighting-map" id = "map-{{ sighting.id }}"></div>
+          
+          <div class="sighting-details">
+            <p><strong>Location:</strong> {{ sighting.latitude|floatformat:4 }}, {{ sighting.longitude|floatformat:4 }}</p>
+            <p><strong>Weather:</strong> {{ sighting.weather_conditions }}</p>
+            {% if sighting.description %}
+            <p><strong>Notes:</strong> {{ sighting.description }}</p>
+            {% endif %}
+          </div>
+
+          <div class="sighting-actions">
+            <button class="action-btn">Like</button>
+            <button class="action-btn">Comment</button>
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <p style="text-align: center; color: #999; padding: 2rem;">No sightings yet. Be the first to log one!</p>
+      {% endif %}
+    </section>
+    {% endif %}
   </div>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    const sightings = [
+      {% for sighting in sightings %}
+        {id: {{sighting.id}} , lat: {{sighting.latitude}}, lng: {{sighting.longitude}}, bird: "{{sighting.bird_species.common_name}}" } {% if not forloop.last %},{% endif %}
+      {%endfor%}
+    ];
+    const cardMapIcon = L.icon({
+      iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+      iconSize: [18, 34],
+    })
+        sightings.forEach(function(sighting) {
+          const mapEl = document.getElementById('map-' + sighting.id);
+          if (mapEl) {
+            const map = L.map(mapEl).setView([sighting.lat, sighting.lng],13);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+              attribution: '&copy; OpenStreetMap contributors'
+            }).addTo(map);
+            L.marker([sighting.lat, sighting.lng], {icon: cardMapIcon}).addTo(map)
+              .bindPopup(sighting.bird);
+          }
+        });
+
+  </script>
 </body>
 
 </html>

@@ -86,7 +86,7 @@
   </nav>
 </header>
 
-<h2 class="title">Bird Sightings Map</h2>
+<h2 class="title">Select Sighting Location</h2>
 <div id="map"></div>
 
 <!-- Leaflet JS -->
@@ -114,7 +114,7 @@ map.on('click', function (e) {
       .setContent(`
           <div style="text-align:center;">
               <p>New Sighting Here?</p>
-              <a href="{% url 'sightings:sighting_form' %}?lat={{ lat }}&lng={{ lng }}" class="btn btn-primary text-white" style="background-color: #00a2ff; color: white; padding: 8px 12px; border-radius: 4px; text-decoration: none; display: inline-block;">
+              <a href="${addUrl}" class="btn btn-primary text-white" style="background-color: #00a2ff; color: white; padding: 8px 12px; border-radius: 4px; text-decoration: none; display: inline-block;">
                 Add my Sighting
               </a>
           </div>

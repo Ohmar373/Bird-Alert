@@ -9,12 +9,19 @@ from django.core.mail import EmailMultiAlternatives
 from django.template.loader import get_template
 from django.template import Context
 from django.shortcuts import render
+from sightings.models import Sighting
+
+import sightings
 
 # Create your views here.
 
 # index view
 def index(request):
-    return render(request, 'user/index.html', {'title': 'index'})
+    sightings_list = Sighting.objects.all().order_by('-timestamp')
+    return render(request, 'user/index.html', {
+        'title': 'index',
+        'sightings': sightings_list
+    })
 
 # register view
 def register(request):

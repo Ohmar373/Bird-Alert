@@ -6,7 +6,7 @@ class SightingForm(forms.ModelForm):
         model = Sighting
         fields = ['bird_species', 'latitude', 'longitude', 'weather_conditions', 'description']
         widgets = {
-            'latitude': forms.HiddenInput(),
-            'longitude': forms.HiddenInput(),
+            'latitude': forms.NumberInput(attrs={'type': 'hidden'}),
+            'longitude': forms.NumberInput(attrs={'type': 'hidden'}),
             'weather_conditions': forms.TextInput(attrs={'placeholder': 'e.g., Sunny, Cloudy, Rainy'}),
         }
