@@ -19,5 +19,7 @@ class Sighting(models.Model):
     timestamp = models.DateTimeField(auto_now_add=True)
     description = models.TextField(blank=True)
     
+    location_name = models.CharField(max_length = 200, blank = True, null = True)
+    
     def __str__(self):
         return f"{self.bird_species.common_name} sighted by {self.user.username} on {self.timestamp.strftime('%Y-%m-%d %H:%M:%S')}"

@@ -128,8 +128,8 @@ This project focuses on applying core computer science and software engineering 
 
 ## 👤 Author
 
-**Omar Alanis**
-**Adam Garcia**
+**Omar Alanis**,
+**Adam Garcia**,
 **Alejandro Barragan**
 Computer Science Students
 Senior Project – 2025–2026

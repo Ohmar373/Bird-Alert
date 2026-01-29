@@ -1,6 +1,9 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from .forms import SightingForm
+from sightings import utils
+from sightings.utils import get_location_name
+from .models import Sighting
 
 @login_required
 def add_sighting(request):
@@ -17,7 +20,8 @@ def sighting_form(request):
         form = SightingForm(request.POST, request.FILES)
         if form.is_valid():
             sighting = form.save(commit=False)
-            sighting.user = request.user  
+            sighting.user = request.user
+            sighting.location_name = utils.get_location_name(sighting.latitude, sighting.longitude)
             sighting.save()
             
             return redirect("index")
@@ -39,3 +43,17 @@ def sighting_form(request):
         "lat": lat,
         "lng": lng
     })
+    
+@login_required
+def delete_sighting(request, sighting_id):
+    sighting = get_object_or_404(Sighting, id=sighting_id)
+
+    if sighting.user != request.user:
+        return redirect("index")
+
+    if request.method == "POST":
+        sighting.delete()
+        return redirect("index")
+
+    return redirect("index")
+        
