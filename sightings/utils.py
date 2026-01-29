@@ -14,10 +14,6 @@ def get_location_name(latitude: float, longitude: float) -> str:
         
         if data.get('address'):
             address = data['address']
-            print("Available fields in address:")
-            for key in address.keys():
-                print(f"  - {key}: {address[key]}")
-            print("="*50)
 
             def with_state(name: str) -> str:
                 if address.get('state'):
@@ -47,5 +43,4 @@ def get_location_name(latitude: float, longitude: float) -> str:
         
     except Exception as e:
         #if the api is down or cant find location -> uses coordinates
-        print(f"Error getting location name: {e}")
         return f"{latitude:.4f}, {longitude:.4f}"
