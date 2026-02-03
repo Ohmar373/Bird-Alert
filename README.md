@@ -81,48 +81,192 @@ This project focuses on applying core computer science and software engineering 
 
 ## ⚙️ Setup Instructions
 
-1. Clone the repository:
+### Prerequisites
 
-   ```bash
-   git clone https://github.com/Ohmar373/Bird-Alert.git
-   ```
+Before you begin, ensure you have the following installed:
+- **Python 3.10+** ([Download here](https://www.python.org/downloads/))
+- **Git** ([Download here](https://git-scm.com/))
+- A terminal/command prompt
 
-2. Navigate into the project directory:
+### Step 1: Clone the Repository
 
-   ```bash
-   cd Bird-Alert
-   ```
+```bash
+git clone https://github.com/Ohmar373/Bird-Alert.git
+cd Bird-Alert/Bird-Alert
+```
 
-3. Create and activate a virtual environment:
+### Step 2: Create a Virtual Environment
 
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\\Scripts\\activate
-   ```
+Create an isolated Python environment for the project:
 
-4. Install dependencies:
+```bash
+# On macOS/Linux:
+python3 -m venv venv
+source venv/bin/activate
 
-   ```bash
-   pip install -r requirements.txt
-   ```
+# On Windows:
+python -m venv venv
+venv\Scripts\activate
+```
 
-5. Run migrations:
+You should see `(venv)` at the beginning of your terminal prompt.
 
-   ```bash
-   python manage.py migrate
-   ```
+### Step 3: Install Dependencies
 
-6. Start the development server:
+```bash
+pip install -r requirements.txt
+```
 
-   ```bash
-   python manage.py runserver
-   ```
+### Step 4: Configure Environment Variables
 
-7. Open your browser and visit:
+Create a `.env` file in the project root (same directory as `manage.py`):
 
-   ```text
-   http://127.0.0.1:8000/
-   ```
+```bash
+touch .env  # On Windows: type nul > .env
+```
+
+Add the following to your `.env` file:
+```
+DEBUG=True
+SECRET_KEY=your-secret-key-here
+```
+
+### Step 5: Run Database Migrations
+
+```bash
+python manage.py migrate
+```
+
+### Step 6: Load Bird Species Data
+
+The application includes a comprehensive database of **10,000+ bird species** from the eBird/Clements checklist. Load this data:
+
+```bash
+python manage.py import_birds bird_alert/data/BirdSpeciesList.csv
+```
+
+**Note:** This may take 2-3 minutes to complete. You'll see progress updates as the import runs.
+
+### Step 7: Create a Superuser (Admin Account)
+
+```bash
+python manage.py createsuperuser
+```
+
+Follow the prompts to create your admin account. You'll use this to access the admin panel.
+
+### Step 8: Run the Development Server
+
+```bash
+python manage.py runserver
+```
+
+### Step 9: Access the Application
+
+Open your browser and visit:
+```
+http://127.0.0.1:8000/
+```
+
+To access the admin panel:
+```
+http://127.0.0.1:8000/admin/
+```
+
+---
+
+## 🎯 First Steps After Setup
+
+1. **Create an Account:** Register a new user at the home page
+2. **Log In:** Use your credentials to access the app
+3. **Add a Sighting:** Click "Add Sighting" to log a bird observation
+4. **Use Autocomplete:** Start typing a bird's common name to see suggestions from the database
+
+---
+
+## 📚 Project Features
+
+### Bird Species Search
+- Autocomplete search with 10,000+ bird species
+- Shows both common names and scientific names
+- Fast, responsive search as you type
+
+### Sighting Logging
+- Record location via map click
+- Log weather conditions
+- Add optional notes/descriptions
+- View all your past sightings
+
+### User Authentication
+- Secure login/logout
+- User registration
+- Password protection
+
+---
+
+## 🔧 Development Commands
+
+```bash
+# Run the development server
+python manage.py runserver
+
+# Create a superuser (admin)
+python manage.py createsuperuser
+
+# Run migrations
+python manage.py migrate
+
+# Make migrations
+python manage.py makemigrations
+
+# Access Django shell
+python manage.py shell
+
+# Import bird species from CSV
+python manage.py import_birds bird_alert/data/BirdSpeciesList.csv
+```
+
+---
+
+## 📁 Project Structure
+
+```text
+Bird-Alert/
+├── bird_alert/                    # Main Django project settings
+│   ├── settings.py               # Project configuration
+│   ├── urls.py                   # URL routing
+│   └── wsgi.py                   # Production server config
+│
+├── sightings/                     # Bird sightings app
+│   ├── models.py                 # BirdSpecies and Sighting models
+│   ├── views.py                  # View logic
+│   ├── forms.py                  # Form definitions
+│   ├── urls.py                   # App-specific URLs
+│   ├── management/commands/      # Custom Django commands
+│   │   └── import_birds.py       # Import bird data from CSV
+│   └── templates/                # HTML templates
+│
+├── user/                          # User authentication app
+│   ├── models.py                 # User models
+│   ├── views.py                  # Auth views
+│   └── templates/                # Auth templates
+│
+├── data/                          # Data files
+│   └── BirdSpeciesList.csv       # Comprehensive bird species database
+│
+├── manage.py                      # Django management script
+├── requirements.txt               # Python dependencies
+└── README.md                      # This file
+```
+
+---
+
+## 🔒 Security Notes
+
+- **Never commit `.env` file** - It's already in `.gitignore`
+- **Keep `SECRET_KEY` private** - Generate a new one for production
+- **Debug mode:** Only enable `DEBUG=True` during development
+- For production, update `ALLOWED_HOSTS` in `settings.py`
 
 ---
 

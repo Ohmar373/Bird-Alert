@@ -1,9 +1,10 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
 from .forms import SightingForm
 from sightings import utils
 from sightings.utils import get_location_name
-from .models import Sighting
+from .models import Sighting, BirdSpecies
 
 @login_required
 def add_sighting(request):
@@ -44,6 +45,28 @@ def sighting_form(request):
         "lng": lng
     })
     
+def search_birds(request):
+    query = request.GET.get('q', '').strip()
+    
+    if len(query) < 1:
+        return JsonResponse({'results': []})
+    
+    # Search by common name
+    birds = BirdSpecies.objects.filter(
+        common_name__icontains=query
+    ).values('id', 'common_name', 'scientific_name')[:20]
+    
+    results = [
+        {
+            'id': bird['id'],
+            'common_name': bird['common_name'],
+            'scientific_name': bird['scientific_name']
+        }
+        for bird in birds
+    ]
+    
+    return JsonResponse({'results': results})
+
 @login_required
 def delete_sighting(request, sighting_id):
     sighting = get_object_or_404(Sighting, id=sighting_id)

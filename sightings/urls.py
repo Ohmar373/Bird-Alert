@@ -7,5 +7,6 @@ urlpatterns = [
     path('add/', views.add_sighting, name='add_sighting'),
     path('sighting-form/', views.sighting_form, name='sighting_form'),
     path('sighting-form/submit/', views.sighting_form, name='add_sighting_details'),
-    path('<int:sighting_id>/delete/', views.delete_sighting, name='delete_sighting')
+    path('<int:sighting_id>/delete/', views.delete_sighting, name='delete_sighting'),
+    path('api/search-birds/', views.search_birds, name='search_birds'),
 ]
