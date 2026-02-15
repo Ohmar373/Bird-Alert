@@ -13,4 +13,5 @@ urlpatterns = [
     path('register/', views.register, name='register'),
     path('add-sighting/', sightings_views.add_sighting, name='add_sighting'),
     path('sightings/', views.sightings, name='sightings'),
+    path('profile/', include(('user.profile.urls', 'profile'), namespace='profile')),
 ]

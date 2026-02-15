@@ -17,7 +17,7 @@ import sightings
 
 # index view
 def index(request):
-    sightings_list = Sighting.objects.all().order_by('-timestamp')
+    sightings_list = Sighting.objects.select_related('user__profile', 'bird_species').all().order_by('-timestamp')
     return render(request, 'user/index.html', {
         'title': 'index',
         'sightings': sightings_list

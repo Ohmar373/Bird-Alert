@@ -144,8 +144,41 @@
       min-height: 350px;
     }
 
-    .sighting-header {
+    .sighting-top-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
       margin-bottom: 0.75rem;
+    }
+
+    .sighting-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      object-fit: cover;
+      flex-shrink: 0;
+      border: 1px solid #e0ddd7;
+    }
+
+    .default-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      background-color: #e0ddd7;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .default-avatar svg {
+      width: 22px;
+      height: 22px;
+      fill: #999;
+    }
+
+    .sighting-header {
+      margin-bottom: 0;
     }
 
     .sighting-header h3 {
@@ -253,6 +286,7 @@
         <li><a href="{% url 'index' %}">Home</a></li>
         {% if user.is_authenticated %}
         <li><a href="{% url 'add_sighting' %}" class="add-sighting-btn">+ Add Sighting</a></li>
+        <li><a href="{% url 'profile:edit' %}">Profile</a></li>
         <li>
           <form method="post" action="{% url 'logout' %}" style="display: inline;">
             {% csrf_token %}
@@ -293,9 +327,18 @@
         {% for sighting in sightings %}
         <div class="sighting-card">
           <div>
-            <div class="sighting-header">
-              <h3>{{ sighting.bird_species.common_name }} <span class="scientific-name">({{ sighting.bird_species.scientific_name }})</span></h3>
-              <p class="sighting-meta">by {{ sighting.user.username }} • {{ sighting.timestamp|date:"M d, Y \a\t g:i A" }}</p>
+            <div class="sighting-top-row">
+              {% if sighting.user.profile.image %}
+                <img src="{{ sighting.user.profile.image.url }}" alt="{{ sighting.user.username }}" class="sighting-avatar">
+              {% else %}
+                <div class="default-avatar">
+                  <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
+                </div>
+              {% endif %}
+              <div class="sighting-header">
+                <h3>{{ sighting.bird_species.common_name }} <span class="scientific-name">({{ sighting.bird_species.scientific_name }})</span></h3>
+                <p class="sighting-meta">by {{ sighting.user.username }} • {{ sighting.timestamp|date:"M d, Y \a\t g:i A" }}</p>
+              </div>
             </div>
             
             <div class="sighting-details">
