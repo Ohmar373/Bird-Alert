@@ -4,7 +4,7 @@ from django.http import JsonResponse
 from .forms import SightingForm
 from sightings import utils
 from sightings.utils import get_location_name
-from .models import Sighting, BirdSpecies
+from .models import Sighting, BirdSpecies, BIRD_CATEGORY_CHOICES
 
 @login_required
 def add_sighting(request):
@@ -47,25 +47,40 @@ def sighting_form(request):
     
 def search_birds(request):
     query = request.GET.get('q', '').strip()
+    category = request.GET.get('category', '').strip()
     
-    if len(query) < 1:
+    if len(query) < 1 and not category:
         return JsonResponse({'results': []})
     
-    # Search by common name
-    birds = BirdSpecies.objects.filter(
-        common_name__icontains=query
-    ).values('id', 'common_name', 'scientific_name')[:20]
+    # Search by common name, optionally filtered by category
+    birds = BirdSpecies.objects.all()
+    
+    if category:
+        birds = birds.filter(category=category)
+    
+    if query:
+        birds = birds.filter(common_name__icontains=query)
+    
+    birds = birds.values('id', 'common_name', 'scientific_name', 'category')[:20]
     
     results = [
         {
             'id': bird['id'],
             'common_name': bird['common_name'],
-            'scientific_name': bird['scientific_name']
+            'scientific_name': bird['scientific_name'],
+            'category': bird['category'],
         }
         for bird in birds
     ]
     
     return JsonResponse({'results': results})
+
+
+def bird_categories(request):
+    """Return the list of bird categories for the filter dropdown."""
+    categories = [{'value': val, 'label': label} for val, label in BIRD_CATEGORY_CHOICES]
+    return JsonResponse({'categories': categories})
+
 
 @login_required
 def delete_sighting(request, sighting_id):
