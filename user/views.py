@@ -3,6 +3,7 @@ from django.contrib.auth import authenticate, login
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth.models import User
 from .forms import UserRegisterForm
 from django.core.mail import send_mail
 from django.core.mail import EmailMultiAlternatives
@@ -18,9 +19,16 @@ import sightings
 # index view
 def index(request):
     sightings_list = Sighting.objects.select_related('user__profile', 'bird_species').all().order_by('-timestamp')
+    
+    # Stats for landing page
+    total_sightings = Sighting.objects.count()
+    total_users = User.objects.count()
+    
     return render(request, 'user/index.html', {
-        'title': 'index',
-        'sightings': sightings_list
+        'title': 'BirdAlert - Discover Birds Together',
+        'sightings': sightings_list,
+        'total_sightings': total_sightings,
+        'total_users': total_users,
     })
 
 # register view
