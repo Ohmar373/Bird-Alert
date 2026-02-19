@@ -1,356 +1,378 @@
+{% extends 'base.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{{title}}</title>
-  
-  <!-- Leaflet CSS -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
 
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background-color: #faf8f3;
-      color: #333;
-      line-height: 1.6;
-    }
+{% block body_class %}landing-page{% endblock %}
 
-    header {
-      background-color: #fff;
-      border-bottom: 2px solid #e0ddd7;
-      padding: 1.5rem 0;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-    }
+{% block title %}BirdAlert - Find Birds. Share Discoveries.{% endblock %}
 
-    nav {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 0 2rem;
-    }
+{% block extra_css %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+{% endblock %}
 
-    .brand {
-      font-size: 1.5rem;
-      font-weight: 600;
-      color: #333;
-      text-decoration: none;
-    }
+{% block content %}
 
-    .nav-links {
-      display: flex;
-      gap: 2rem;
-      list-style: none;
-    }
-
-    .nav-links a {
-      text-decoration: none;
-      color: #333;
-      font-size: 1rem;
-      transition: color 0.3s;
-    }
-
-    .nav-links a:hover {
-      color: #666;
-    }
-
-    .logout-btn {
-      background: none;
-      border: none;
-      color: #333;
-      font-size: 1rem;
-      cursor: pointer;
-      transition: color 0.3s;
-    }
-
-    .logout-btn:hover {
-      color: #666;
-    }
-
-    .add-sighting-btn {
-      background: none;
-      border: none;
-      color: #333;
-      font-size: 1rem;
-      cursor: pointer;
-      transition: color 0.3s;
-    }
-
-    .add-sighting-btn:hover {
-      color: #666;
-    }
-
-    .container {
-      max-width: 1200px;
-      margin: 4rem auto;
-      padding: 0 2rem;
-    }
-
-    .welcome-section {
-      text-align: center;
-      margin-bottom: 3rem;
-    }
-
-    .welcome-section h1 {
-      font-size: 2.5rem;
-      color: #333;
-      font-weight: 600;
-      letter-spacing: -1px;
-    }
-
-    .welcome-section p {
-      font-size: 1.1rem;
-      color: #666;
-      margin-top: 0.5rem;
-    }
-
-    .message {
-      background-color: #d4edda;
-      border-left: 4px solid #28a745;
-      padding: 1rem;
-      margin-bottom: 1.5rem;
-      border-radius: 4px;
-      color: #155724;
-    }
-
-    .sightings-section {
-      max-width: 800px;
-      margin: 3rem auto;
-      padding: 0 1rem;
-    }
-
-    .sighting-card {
-      background: white;
-      border-radius: 6px;
-      padding: 3rem;
-      margin-bottom: 2rem;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-      display: grid;
-      grid-template-columns: 1fr 280px;
-      gap: 1.5rem;
-      align-items: start;
-      border: 1px solid #e8e8e8;
-      min-height: 350px;
-    }
-
-    .sighting-header {
-      margin-bottom: 0.75rem;
-    }
-
-    .sighting-header h3 {
-      margin: 0;
-      color: #333;
-      font-size: 1.1rem;
-      font-weight: 600;
-    }
-
-    .scientific-name {
-      font-size: 0.8rem;
-      color: #aaa;
-      font-style: italic;
-      font-weight: 400;
-    }
-
-    .sighting-meta {
-      color: #999;
-      font-size: 0.8rem;
-      margin: 0.5rem 0 0 0;
-    }
-
-    .sighting-details {
-      background-color: transparent;
-      padding: 0;
-      margin: 0.5rem 0 0 0;
-      font-size: 0.9rem;
-    }
-
-    .sighting-details p {
-      margin: 0.4rem 0;
-      color: #666;
-      font-size: 0.9rem;
-    }
-
-    .sighting-actions {
-      display: flex;
-      gap: 0.5rem;
-      margin-top: 9rem;
-      padding-top: 0;
-      border-top: none;
-    }
-
-    .action-btn {
-      flex: 1;
-      padding: 0.4rem 0.6rem;
-      border: 1px solid #e0ddd7;
-      background-color: white;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 0.85rem;
-      transition: all 0.2s;
-      color: #333;
-    }
-
-    .action-btn:hover {
-      background-color: #f5f5f5;
-      border-color: #00a2ff;
-      color: #00a2ff;
-    }
-    
-    .sighting-map {
-      height: 320px;
-      width: 280px;
-      border-radius: 6px;
-      z-index: 10;
-    }
-
-    @media (max-width: 768px) {
-      .nav-links {
-        gap: 1rem;
-        font-size: 0.9rem;
-      }
-
-      .welcome-section h1 {
-        font-size: 1.8rem;
-      }
-
-      nav {
-        padding: 0 1rem;
-      }
-
-      .sighting-card {
-        grid-template-columns: 1fr;
-        margin-bottom: 1.5rem;
-      }
-
-      .sighting-map {
-        width: 100%;
-        height: 250px;
-      }
-
-      .sightings-section {
-        max-width: 100%;
-      }
-    }
-  </style>
-</head>
-
-<body>
-  <header>
-    <nav>
-      <a href="{% url 'index' %}" class="brand">🐦 BirdAlert</a>
-      <ul class="nav-links">
-        <li><a href="{% url 'index' %}">Home</a></li>
-        {% if user.is_authenticated %}
-        <li><a href="{% url 'add_sighting' %}" class="add-sighting-btn">+ Add Sighting</a></li>
-        <li>
-          <form method="post" action="{% url 'logout' %}" style="display: inline;">
-            {% csrf_token %}
-            <button type="submit" class="logout-btn">Logout</button>
-          </form>
-        </li>
-        {% else %}
-        <li><a href="{% url 'register' %}">Sign Up</a></li>
-        <li><a href="{% url 'login' %}">Log In</a></li>
-        {% endif %}
-      </ul>
-    </nav>
-  </header>
-
-  <div class="container">
-    {% if messages %}
+{% if messages %}
+  <div style="position: fixed; top: 80px; right: 1.5rem; z-index: 9999; width: 320px;">
     {% for message in messages %}
-    <div class="message">{{ message }}</div>
+    <div class="message" style="margin-bottom: 0.5rem;">{{ message }}</div>
     {% endfor %}
-    {% endif %}
-
-    <section class="welcome-section">
-      {% block start %}
-      {% if user.is_authenticated %}
-      <h1>Welcome back, {{user.username}}!</h1>
-      {% else %}
-      <h1>Hello!</h1>
-      <p>Log in or sign up to get started</p>
-      {% endif %}
-      {% endblock %}
-    </section>
-
-    {% if user.is_authenticated %}
-    <section class="sightings-section">
-      <h2 style="text-align: center; margin-bottom: 2rem; color: #333;">Recent Bird Sightings</h2>
-      
-      {% if sightings %}
-        {% for sighting in sightings %}
-        <div class="sighting-card">
-          <div>
-            <div class="sighting-header">
-              <h3>{{ sighting.bird_species.common_name }} <span class="scientific-name">({{ sighting.bird_species.scientific_name }})</span></h3>
-              <p class="sighting-meta">by {{ sighting.user.username }} • {{ sighting.timestamp|date:"M d, Y \a\t g:i A" }}</p>
-            </div>
-            
-            <div class="sighting-details">
-              <p><strong>Location:</strong> {{ sighting.location_name }}</p>
-              <p><strong>Weather:</strong> {{ sighting.weather_conditions }}</p>
-              {% if sighting.description %}
-              <p><strong>Notes:</strong> {{ sighting.description }}</p>
-              {% endif %}
-            </div>
-
-            <div class="sighting-actions">
-              <button class="action-btn">Like</button>
-              <button class="action-btn">Comment</button>
-              {% if sighting.user == user %}
-              <form method="post" action="{% url 'sightings:delete_sighting' sighting.id %}" onsubmit="return confirm('Delete this sighting?');" style="flex: 1;">
-                {% csrf_token %}
-                <button type="submit" class="action-btn">Delete</button>
-              </form>
-              {% endif %}
-            </div>
-          </div>
-          
-          <div class="sighting-map" id="map-{{ sighting.id }}"></div>
-        </div>
-        {% endfor %}
-      {% else %}
-        <p style="text-align: center; color: #999; padding: 2rem;">No sightings yet. Be the first to log one!</p>
-      {% endif %}
-    </section>
-    {% endif %}
   </div>
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script>
-    const sightings = [
-      {% for sighting in sightings %}
-        {id: {{sighting.id}} , lat: {{sighting.latitude}}, lng: {{sighting.longitude}}, bird: "{{sighting.bird_species.common_name}}" } {% if not forloop.last %},{% endif %}
-      {%endfor%}
-    ];
-    const cardMapIcon = L.icon({
-      iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
-      iconSize: [18, 34],
-    })
-        sightings.forEach(function(sighting) {
-          const mapEl = document.getElementById('map-' + sighting.id);
-          if (mapEl) {
-            const map = L.map(mapEl).setView([sighting.lat, sighting.lng],13);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-              attribution: '&copy; OpenStreetMap contributors'
-            }).addTo(map);
-            L.marker([sighting.lat, sighting.lng], {icon: cardMapIcon}).addTo(map)
-              .bindPopup(sighting.bird);
-          }
-        });
+{% endif %}
 
-  </script>
-</body>
+{% if user.is_authenticated %}
+<!-- ============================= AUTHENTICATED USER FEED ============================= -->
 
-</html>
+<section class="welcome-section">
+  <h1>Welcome back, {{ user.username }}!</h1>
+  <p>Ready to log a new sighting? <a href="{% url 'add_sighting' %}" style="color: #2d6a4f; font-weight: 600;">Add one now →</a></p>
+</section>
+
+<section class="sightings-section">
+  <h2 style="text-align: center; margin-bottom: 2rem; color: #333;">Recent Bird Sightings</h2>
+
+  {% if sightings %}
+    {% for sighting in sightings %}
+    <div class="sighting-card">
+      <div>
+        <div class="sighting-header">
+          <h3>{{ sighting.bird_species.common_name }} <span class="scientific-name">({{ sighting.bird_species.scientific_name }})</span></h3>
+          <p class="sighting-meta">by {{ sighting.user.username }} • {{ sighting.timestamp|date:"M d, Y \a\t g:i A" }}</p>
+        </div>
+
+        <div class="sighting-details">
+          <p><strong>Location:</strong> {{ sighting.location_name }}</p>
+          <p><strong>Weather:</strong> {{ sighting.weather_conditions }}</p>
+          {% if sighting.description %}
+          <p><strong>Notes:</strong> {{ sighting.description }}</p>
+          {% endif %}
+        </div>
+
+        <div class="sighting-actions">
+          <button class="action-btn">Like</button>
+          <button class="action-btn">Comment</button>
+          {% if sighting.user == user %}
+          <form method="post" action="{% url 'sightings:delete_sighting' sighting.id %}" onsubmit="return confirm('Delete this sighting?');" style="flex: 1;">
+            {% csrf_token %}
+            <button type="submit" class="action-btn" style="width: 100%;">Delete</button>
+          </form>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="sighting-map" id="map-{{ sighting.id }}"></div>
+    </div>
+    {% endfor %}
+  {% else %}
+    <p style="text-align: center; color: #999; padding: 2rem;">No sightings yet. Be the first to log one!</p>
+  {% endif %}
+</section>
+
+{% else %}
+<!-- ============================= GUEST LANDING PAGE ============================= -->
+
+<!-- ─── HERO ─────────────────────────────────────────────────────────────────── -->
+<section class="lp-hero" id="lp-hero" style="background-image: url('{% static 'egret.jpg' %}');">
+  <div class="lp-hero-overlay"></div>
+  <div class="lp-hero-inner">
+    <div class="lp-hero-content">
+      <span class="lp-hero-badge">🐦 Community Bird Watching Platform</span>
+      <h1 class="lp-hero-title">Find Birds.<br>Share Discoveries.<br>Connect with Nature.</h1>
+      <p class="lp-hero-subtitle">
+        The community-powered platform for birders of all levels. Log sightings with GPS precision,
+        identify species from 10,000+ database, and discover birds in proven locations near you.
+      </p>
+      <div class="lp-hero-actions">
+        <a href="{% url 'register' %}" class="lp-btn-primary">Join Free →</a>
+        <a href="{% url 'login' %}" class="lp-btn-ghost">Sign In</a>
+      </div>
+      <p class="lp-hero-tagline">Perfect for the curious beginner and the seasoned expert alike.</p>
+    </div>
+  </div>
+  <div class="lp-scroll-indicator"></div>
+</section>
+
+<!-- ─── INTRO STRIP ────────────────────────────────────────────────────────────── -->
+<div class="lp-intro">
+  <div class="lp-container">
+    <p class="lp-intro-text">
+      BirdAlert connects birdwatchers to proven sighting locations, a massive species database,
+      and a vibrant community — all in one free platform.
+    </p>
+  </div>
+</div>
+
+<!-- ─── PHOTO SHOWCASE ─────────────────────────────────────────────────────────── -->
+<section class="lp-gallery">
+  <div class="lp-gallery-grid">
+    <div class="lp-gallery-item lp-gallery-large">
+      <img src="{% static 'egret.jpg' %}" alt="Great Egret in the wild" loading="lazy">
+      <div class="lp-gallery-label">
+        <h3>Spot Rare Species</h3>
+        <p>From elegant egrets to migratory waterfowl — find them all</p>
+      </div>
+    </div>
+    <div class="lp-gallery-item">
+      <img src="{% static 'goose.jpg' %}" alt="Goose sighting" loading="lazy">
+      <div class="lp-gallery-label">
+        <h3>Explore Local Hotspots</h3>
+        <p>Community-verified locations where birds are actually found</p>
+      </div>
+    </div>
+    <div class="lp-gallery-item">
+      <img src="{% static 'bird-flowers.jpg' %}" alt="Bird among flowers" loading="lazy">
+      <div class="lp-gallery-label">
+        <h3>Discover Nature's Beauty</h3>
+        <p>Every sighting tells a story — share yours with the community</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── FEATURES ───────────────────────────────────────────────────────────────── -->
+<section class="lp-features" id="features">
+  <div class="lp-container">
+    <div class="lp-section-header">
+      <span class="lp-section-tag">Features</span>
+      <h2>Everything a Birder Needs</h2>
+      <p>Whether you're a casual observer or a serious enthusiast, BirdAlert has the tools to enhance every outing.</p>
+    </div>
+    <div class="lp-features-grid">
+
+      <div class="lp-feature-card">
+        <div class="lp-feature-icon" style="background: #e8f5e9; color: #2d6a4f;">📍</div>
+        <h3>GPS Sighting Logs</h3>
+        <p>Pin exact locations on interactive maps. Return to proven spots where others have found rare birds and see community sightings in real time.</p>
+      </div>
+
+      <div class="lp-feature-card">
+        <div class="lp-feature-icon" style="background: #e3f2fd; color: #1565c0;">🔍</div>
+        <h3>Bird Identification</h3>
+        <p>Not sure what you saw? Search our database of 10,000+ species by name or description. Find the exact bird with common and scientific names.</p>
+      </div>
+
+      <div class="lp-feature-card">
+        <div class="lp-feature-icon" style="background: #fff3e0; color: #e65100;">📸</div>
+        <h3>Photo Uploads</h3>
+        <p>Attach photos directly to your sightings. Capture the moment and help others identify species with visual evidence straight from the field.</p>
+      </div>
+
+      <div class="lp-feature-card">
+        <div class="lp-feature-icon" style="background: #fce4ec; color: #c62828;">❤️</div>
+        <h3>Likes & Comments</h3>
+        <p>Engage with the birding community. Like remarkable sightings, leave comments, and build lasting connections with fellow birdwatchers.</p>
+      </div>
+
+      <div class="lp-feature-card">
+        <div class="lp-feature-icon" style="background: #f3e5f5; color: #6a1b9a;">🗺️</div>
+        <h3>Find Local Parks & Birds</h3>
+        <p>Sightings are automatically reverse-geocoded to display the nearest park, city, or natural area — helping you find proven birding locations.</p>
+      </div>
+
+      <div class="lp-feature-card">
+        <div class="lp-feature-icon" style="background: #e8eaf6; color: #283593;">☁️</div>
+        <h3>Weather & Field Notes</h3>
+        <p>Record weather conditions alongside every sighting. Build a rich personal birding journal and understand patterns over time.</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ─── HOW IT WORKS ───────────────────────────────────────────────────────────── -->
+<section class="lp-how">
+  <div class="lp-container">
+    <div class="lp-section-header lp-section-header-light">
+      <span class="lp-section-tag lp-tag-light">Simple</span>
+      <h2>Get Started in Minutes</h2>
+      <p>No app download required. BirdAlert works right in your browser — completely free.</p>
+    </div>
+    <div class="lp-steps">
+      <div class="lp-step">
+        <div class="lp-step-num">1</div>
+        <h3>Create a Free Account</h3>
+        <p>Sign up in seconds with just a username and email. No payment, no subscription — free forever.</p>
+      </div>
+      <div class="lp-step-arrow">→</div>
+      <div class="lp-step">
+        <div class="lp-step-num">2</div>
+        <h3>Log Your First Sighting</h3>
+        <p>Use GPS to mark the location, search for the bird species, add weather, notes, and a photo.</p>
+      </div>
+      <div class="lp-step-arrow">→</div>
+      <div class="lp-step">
+        <div class="lp-step-num">3</div>
+        <h3>Explore & Connect</h3>
+        <p>Browse community sightings, find birds near you, like and comment, and build your life list.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── STATS ──────────────────────────────────────────────────────────────────── -->
+<section class="lp-stats">
+  <div class="lp-container">
+    <div class="lp-stats-grid">
+      <div class="lp-stat">
+        <div class="lp-stat-num">10,000+</div>
+        <div class="lp-stat-label">Bird Species</div>
+      </div>
+      <div class="lp-stat">
+        <div class="lp-stat-num">{{ total_sightings|default:"0" }}</div>
+        <div class="lp-stat-label">Sightings Logged</div>
+      </div>
+      <div class="lp-stat">
+        <div class="lp-stat-num">{{ total_users|default:"0" }}</div>
+        <div class="lp-stat-label">Birdwatchers</div>
+      </div>
+      <div class="lp-stat">
+        <div class="lp-stat-num">Free</div>
+        <div class="lp-stat-label">Always & Forever</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── COMMUNITY PREVIEW ──────────────────────────────────────────────────────── -->
+{% if sightings %}
+<section class="lp-community">
+  <div class="lp-container">
+    <div class="lp-section-header">
+      <span class="lp-section-tag">Live Activity</span>
+      <h2>What the Community is Discovering</h2>
+      <p>Real sightings logged by BirdAlert members. Join to add your own and see the full map.</p>
+    </div>
+    <div class="lp-sightings-grid">
+      {% for sighting in sightings|slice:":6" %}
+      <div class="lp-sighting-card">
+        <div class="lp-sighting-map" id="lp-map-{{ sighting.id }}"></div>
+        <div class="lp-sighting-info">
+          <h4>{{ sighting.bird_species.common_name }}</h4>
+          <em>{{ sighting.bird_species.scientific_name }}</em>
+          <div class="lp-sighting-meta">
+            <span>📍 {{ sighting.location_name|truncatechars:28 }}</span>
+            <span>{{ sighting.timestamp|timesince }} ago</span>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="lp-community-cta">
+      <p>Join the community to see all sightings and log your own discoveries.</p>
+      <a href="{% url 'register' %}" class="lp-btn-primary">Join BirdAlert Free →</a>
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<!-- ─── CTA BANNER ─────────────────────────────────────────────────────────────── -->
+<section class="lp-cta" style="background-image: url('{% static 'bird-flowers.jpg' %}');">
+  <div class="lp-cta-overlay">
+    <div class="lp-container">
+      <h2>Ready to Start Your Birding Journey?</h2>
+      <p>
+        Join BirdAlert for free and become part of a growing community of bird enthusiasts.
+        Find birds in proven locations, identify species you've never seen before, and share
+        your discoveries with people who love nature as much as you do.
+      </p>
+      <div class="lp-cta-actions">
+        <a href="{% url 'register' %}" class="lp-cta-btn-primary">Create Free Account</a>
+        <a href="{% url 'login' %}" class="lp-cta-btn-ghost">Already a member? Sign In</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── FOOTER ─────────────────────────────────────────────────────────────────── -->
+<footer class="lp-footer">
+  <div class="lp-container">
+    <div class="lp-footer-grid">
+      <div class="lp-footer-brand">
+        <div class="lp-footer-logo">🐦 BirdAlert</div>
+        <p>The community bird watching platform for everyone. Find birds. Share discoveries. Connect with nature.</p>
+      </div>
+      <div class="lp-footer-links">
+        <h4>Platform</h4>
+        <a href="{% url 'index' %}">Home</a>
+        <a href="{% url 'register' %}">Sign Up Free</a>
+        <a href="{% url 'login' %}">Login</a>
+      </div>
+      <div class="lp-footer-links">
+        <h4>Features</h4>
+        <a href="#features">GPS Sightings</a>
+        <a href="#features">Bird Database</a>
+        <a href="#features">Community Feed</a>
+      </div>
+    </div>
+    <div class="lp-footer-bottom">
+      <p>© 2026 BirdAlert — A Computer Science Senior Project. All rights reserved.</p>
+    </div>
+  </div>
+</footer>
+
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+  // ── Map data ──────────────────────────────────────────────────────────────
+  const sightingsData = [
+    {% for sighting in sightings %}
+      {id: {{ sighting.id }}, lat: {{ sighting.latitude }}, lng: {{ sighting.longitude }}, bird: "{{ sighting.bird_species.common_name }}"}{% if not forloop.last %},{% endif %}
+    {% endfor %}
+  ];
+
+  const redIcon = L.icon({
+    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+    iconSize: [18, 34],
+  });
+
+  {% if user.is_authenticated %}
+  // ── Authenticated: full sighting card maps ────────────────────────────────
+  sightingsData.forEach(function(s) {
+    const el = document.getElementById('map-' + s.id);
+    if (el) {
+      const map = L.map(el).setView([s.lat, s.lng], 13);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap'
+      }).addTo(map);
+      L.marker([s.lat, s.lng], {icon: redIcon}).addTo(map).bindPopup(s.bird);
+    }
+  });
+
+  {% else %}
+  // ── Guest: landing page preview maps ──────────────────────────────────────
+  sightingsData.slice(0, 6).forEach(function(s) {
+    const el = document.getElementById('lp-map-' + s.id);
+    if (el) {
+      const map = L.map(el, {
+        zoomControl: false,
+        dragging: false,
+        scrollWheelZoom: false,
+        attributionControl: false
+      }).setView([s.lat, s.lng], 11);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+      L.marker([s.lat, s.lng], {icon: redIcon}).addTo(map);
+    }
+  });
+
+  // ── Transparent header on scroll ──────────────────────────────────────────
+  const header = document.getElementById('site-header');
+  const hero = document.getElementById('lp-hero');
+
+  function updateHeader() {
+    if (window.scrollY > 60) {
+      header.classList.add('lp-header-scrolled');
+    } else {
+      header.classList.remove('lp-header-scrolled');
+    }
+  }
+
+  updateHeader();
+  window.addEventListener('scroll', updateHeader, { passive: true });
+  {% endif %}
+</script>
+{% endblock %}
