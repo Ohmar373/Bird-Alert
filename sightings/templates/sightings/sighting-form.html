@@ -18,6 +18,13 @@
             <div class="alert alert-danger">{{ form.non_field_errors }}</div>
             {% endif %}
             
+            <div class="form-group">
+                <label for="bird_category" class="form-label">Category</label>
+                <select id="bird_category" style="width: 100%; padding: 0.5rem; border: 1px solid #e0ddd7; border-radius: 4px; font-size: 0.95rem; background: white;">
+                    <option value="">All Categories</option>
+                </select>
+            </div>
+
             <div class="form-group" style="position: relative;">
                 <label for="{{ form.bird_species.id_for_label }}" class="form-label">Bird *</label>
                 {{ form.bird_species }}
@@ -75,19 +82,45 @@
 <script>
     const birdInput = document.getElementById('bird_species_input');
     const suggestionBox = document.getElementById('bird_suggestions');
+    const categorySelect = document.getElementById('bird_category');
     let debounceTimer;
 
-    birdInput.addEventListener('input', function() {
-        clearTimeout(debounceTimer);
-        const query = this.value.trim();
+    // Load categories on page load
+    fetch('/sightings/api/bird-categories/')
+        .then(response => response.json())
+        .then(data => {
+            data.categories.forEach(cat => {
+                const option = document.createElement('option');
+                option.value = cat.value;
+                option.textContent = cat.label;
+                categorySelect.appendChild(option);
+            });
+        });
 
-        if (query.length < 1) {
+    // When category changes, clear bird input and trigger a fresh search
+    categorySelect.addEventListener('change', function() {
+        birdInput.value = '';
+        suggestionBox.style.display = 'none';
+        birdInput.focus();
+    });
+
+    function fetchBirds() {
+        clearTimeout(debounceTimer);
+        const query = birdInput.value.trim();
+        const category = categorySelect.value;
+
+        if (query.length < 1 && !category) {
             suggestionBox.style.display = 'none';
             return;
         }
 
         debounceTimer = setTimeout(() => {
-            fetch(`/sightings/api/search-birds/?q=${encodeURIComponent(query)}`)
+            let url = `/sightings/api/search-birds/?q=${encodeURIComponent(query)}`;
+            if (category) {
+                url += `&category=${encodeURIComponent(category)}`;
+            }
+
+            fetch(url)
                 .then(response => response.json())
                 .then(data => {
                     suggestionBox.innerHTML = '';
@@ -117,11 +150,13 @@
                     suggestionBox.style.display = 'block';
                 });
         }, 300);
-    });
+    }
+
+    birdInput.addEventListener('input', fetchBirds);
 
     // Hide suggestions when clicking outside
     document.addEventListener('click', function(e) {
-        if (e.target !== birdInput) {
+        if (e.target !== birdInput && e.target !== categorySelect) {
             suggestionBox.style.display = 'none';
         }
     });
