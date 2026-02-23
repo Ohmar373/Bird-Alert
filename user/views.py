@@ -9,7 +9,8 @@ from django.core.mail import EmailMultiAlternatives
 from django.template.loader import get_template
 from django.template import Context
 from django.shortcuts import render
-from sightings.models import Sighting
+from sightings.models import Sighting, Like
+from django.db.models import Count, OuterRef, Exists, Value
 
 import sightings
 
@@ -17,10 +18,21 @@ import sightings
 
 # index view
 def index(request):
-    sightings_list = Sighting.objects.all().order_by('-timestamp')
+    qs = Sighting.objects.all().order_by('-timestamp')
+
+    # annotate like counts
+    qs = qs.annotate(like_count=Count('like'))
+
+    # annotate whether the current user has liked each sighting
+    if request.user.is_authenticated:
+        liked_subquery = Like.objects.filter(user=request.user, sighting=OuterRef('pk'))
+        qs = qs.annotate(liked=Exists(liked_subquery))
+    else:
+        qs = qs.annotate(liked=Value(False))
+
     return render(request, 'user/index.html', {
         'title': 'index',
-        'sightings': sightings_list
+        'sightings': qs
     })
 
 # register view

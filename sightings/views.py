@@ -5,10 +5,14 @@ from .forms import SightingForm
 from sightings import utils
 from sightings.utils import get_location_name
 from .models import Sighting, BirdSpecies
+from .models import Like, Comment
+from django.views.decorators.http import require_POST
+from django.utils import timezone
 
 @login_required
-def add_sighting(request):
-    return render(request, "sightings/add_sighting.html")
+def discover(request):
+    """Render the Discover page (map + search + filters)."""
+    return render(request, "sightings/discover.html")
 
 @login_required
 def sighting_form(request):
@@ -66,6 +70,91 @@ def search_birds(request):
     ]
     
     return JsonResponse({'results': results})
+
+def list_birds(request):
+    """Return a short list of bird species for populating filters/selects."""
+    birds = BirdSpecies.objects.all().values('id', 'common_name')[:500]
+    results = [{'id': b['id'], 'common_name': b['common_name']} for b in birds]
+    return JsonResponse({'results': results})
+
+def search_sightings(request):
+    """API: Return sightings matching a query or species id.
+
+    Params:
+      q - partial common_name match
+      species_id - exact BirdSpecies id
+    """
+    q = request.GET.get('q', '').strip()
+    species_id = request.GET.get('species_id')
+
+    sightings_qs = Sighting.objects.select_related('bird_species', 'user').all()
+
+    if species_id:
+        try:
+            sightings_qs = sightings_qs.filter(bird_species__id=int(species_id))
+        except (ValueError, TypeError):
+            sightings_qs = sightings_qs.none()
+    elif q:
+        sightings_qs = sightings_qs.filter(bird_species__common_name__icontains=q)
+    else:
+        # If no filter provided, return recent sightings
+        sightings_qs = sightings_qs.order_by('-timestamp')[:200]
+
+    data = [
+        {
+            'id': s.id,
+            'lat': s.latitude,
+            'lng': s.longitude,
+            'common_name': s.bird_species.common_name,
+            'timestamp': s.timestamp.isoformat(),
+            'user': s.user.username,
+        }
+        for s in sightings_qs[:500]
+    ]
+
+    return JsonResponse({'results': data})
+
+
+@login_required
+@require_POST
+def like_sighting(request, sighting_id):
+    sighting = get_object_or_404(Sighting, id=sighting_id)
+    user = request.user
+
+    liked = False
+    existing = Like.objects.filter(user=user, sighting=sighting)
+    if existing.exists():
+        existing.delete()
+        liked = False
+    else:
+        Like.objects.create(user=user, sighting=sighting)
+        liked = True
+
+    count = Like.objects.filter(sighting=sighting).count()
+    return JsonResponse({'liked': liked, 'count': count})
+
+
+def get_comments(request, sighting_id):
+    sighting = get_object_or_404(Sighting, id=sighting_id)
+    comments = Comment.objects.filter(sighting=sighting).select_related('user').order_by('-timestamp')[:50]
+    data = [
+        {'user': c.user.username, 'text': c.text, 'timestamp': c.timestamp.isoformat()}
+        for c in comments
+    ]
+    return JsonResponse({'results': data})
+
+
+@login_required
+@require_POST
+def add_comment(request, sighting_id):
+    sighting = get_object_or_404(Sighting, id=sighting_id)
+    text = request.POST.get('text', '').strip()
+    if not text:
+        return JsonResponse({'error': 'Empty comment'}, status=400)
+
+    comment = Comment.objects.create(user=request.user, sighting=sighting, text=text, timestamp=timezone.now())
+
+    return JsonResponse({'user': comment.user.username, 'text': comment.text, 'timestamp': comment.timestamp.isoformat()})
 
 @login_required
 def delete_sighting(request, sighting_id):
