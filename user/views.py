@@ -15,7 +15,7 @@ from .forms import UserRegisterForm
 
 # index view
 def index(request):
-    qs = Sighting.objects.select_related("bird_species", "user").order_by("-timestamp")
+    qs = Sighting.objects.select_related("bird_species", "user", "user__profile").order_by("-timestamp")
     qs = qs.annotate(like_count=Count("like"))
 
     if request.user.is_authenticated:
