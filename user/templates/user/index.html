@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block body_class %}landing-page{% endblock %}
+{% block body_class %}{% if not user.is_authenticated %}landing-page{% endif %}{% endblock %}
 
 {% block title %}BirdAlert - Find Birds. Share Discoveries.{% endblock %}
 
@@ -9,7 +9,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 {% endblock %}
 
 {% block content %}
@@ -23,7 +22,6 @@
 {% endif %}
 
 {% if user.is_authenticated %}
-<!-- ============================= AUTHENTICATED USER FEED ============================= -->
 
 <section class="welcome-section">
   <h1>Welcome back, {{ user.username }}!</h1>
@@ -37,18 +35,9 @@
     {% for sighting in sightings %}
     <div class="sighting-card">
       <div>
-        <div class="sighting-top-row">
-          {% if sighting.user.profile.image %}
-            <img src="{{ sighting.user.profile.image.url }}" alt="{{ sighting.user.username }}" class="sighting-avatar">
-          {% else %}
-            <div class="default-avatar">
-              <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
-            </div>
-          {% endif %}
-          <div class="sighting-header">
-            <h3>{{ sighting.bird_species.common_name }} <span class="scientific-name">({{ sighting.bird_species.scientific_name }})</span></h3>
-            <p class="sighting-meta">by {{ sighting.user.username }} • {{ sighting.timestamp|date:"M d, Y \a\t g:i A" }}</p>
-          </div>
+        <div class="sighting-header">
+          <h3>{{ sighting.bird_species.common_name }} <span class="scientific-name">({{ sighting.bird_species.scientific_name }})</span></h3>
+          <p class="sighting-meta">by {{ sighting.user.username }} • {{ sighting.timestamp|date:"M d, Y \a\t g:i A" }}</p>
         </div>
 
         <div class="sighting-details">
@@ -60,14 +49,31 @@
         </div>
 
         <div class="sighting-actions">
-          <button class="action-btn">Like</button>
-          <button class="action-btn">Comment</button>
+          <button class="action-btn like-btn" data-id="{{ sighting.id }}">
+            {% if sighting.liked %}
+              Unlike
+            {% else %}
+              Like
+            {% endif %}
+            <span class="like-count">({{ sighting.like_count }})</span>
+          </button>
+
+          <button class="action-btn comment-btn" data-id="{{ sighting.id }}">Comment</button>
+
           {% if sighting.user == user %}
           <form method="post" action="{% url 'sightings:delete_sighting' sighting.id %}" onsubmit="return confirm('Delete this sighting?');" style="flex: 1;">
             {% csrf_token %}
             <button type="submit" class="action-btn" style="width: 100%;">Delete</button>
           </form>
           {% endif %}
+        </div>
+
+        <div class="comments" id="comments-{{ sighting.id }}" style="display:none; margin-top:1rem;">
+          <div class="comments-list" id="comments-list-{{ sighting.id }}" style="margin-bottom:0.5rem; color:#333;"></div>
+          <div style="display:flex; gap:0.5rem;">
+            <input type="text" class="comment-input" id="comment-input-{{ sighting.id }}" placeholder="Write a comment..." style="flex:1; padding:0.5rem; border:1px solid #e0ddd7; border-radius:4px;" />
+            <button class="action-btn comment-submit" data-id="{{ sighting.id }}">Post</button>
+          </div>
         </div>
       </div>
 
@@ -80,9 +86,7 @@
 </section>
 
 {% else %}
-<!-- ============================= GUEST LANDING PAGE ============================= -->
 
-<!-- ─── HERO ─────────────────────────────────────────────────────────────────── -->
 <section class="lp-hero" id="lp-hero" style="background-image: url('{% static 'egret.jpg' %}');">
   <div class="lp-hero-overlay"></div>
   <div class="lp-hero-inner">
@@ -103,7 +107,6 @@
   <div class="lp-scroll-indicator"></div>
 </section>
 
-<!-- ─── INTRO STRIP ────────────────────────────────────────────────────────────── -->
 <div class="lp-intro">
   <div class="lp-container">
     <p class="lp-intro-text">
@@ -113,7 +116,6 @@
   </div>
 </div>
 
-<!-- ─── PHOTO SHOWCASE ─────────────────────────────────────────────────────────── -->
 <section class="lp-gallery">
   <div class="lp-gallery-grid">
     <div class="lp-gallery-item lp-gallery-large">
@@ -140,7 +142,6 @@
   </div>
 </section>
 
-<!-- ─── FEATURES ───────────────────────────────────────────────────────────────── -->
 <section class="lp-features" id="features">
   <div class="lp-container">
     <div class="lp-section-header">
@@ -190,7 +191,6 @@
   </div>
 </section>
 
-<!-- ─── HOW IT WORKS ───────────────────────────────────────────────────────────── -->
 <section class="lp-how">
   <div class="lp-container">
     <div class="lp-section-header lp-section-header-light">
@@ -220,7 +220,6 @@
   </div>
 </section>
 
-<!-- ─── STATS ──────────────────────────────────────────────────────────────────── -->
 <section class="lp-stats">
   <div class="lp-container">
     <div class="lp-stats-grid">
@@ -244,7 +243,6 @@
   </div>
 </section>
 
-<!-- ─── COMMUNITY PREVIEW ──────────────────────────────────────────────────────── -->
 {% if sightings %}
 <section class="lp-community">
   <div class="lp-container">
@@ -276,7 +274,6 @@
 </section>
 {% endif %}
 
-<!-- ─── CTA BANNER ─────────────────────────────────────────────────────────────── -->
 <section class="lp-cta" style="background-image: url('{% static 'bird-flowers.jpg' %}');">
   <div class="lp-cta-overlay">
     <div class="lp-container">
@@ -294,7 +291,6 @@
   </div>
 </section>
 
-<!-- ─── FOOTER ─────────────────────────────────────────────────────────────────── -->
 <footer class="lp-footer">
   <div class="lp-container">
     <div class="lp-footer-grid">
@@ -325,9 +321,7 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-  // ── Map data ──────────────────────────────────────────────────────────────
   const sightingsData = [
     {% for sighting in sightings %}
       {id: {{ sighting.id }}, lat: {{ sighting.latitude }}, lng: {{ sighting.longitude }}, bird: "{{ sighting.bird_species.common_name }}"}{% if not forloop.last %},{% endif %}
@@ -340,20 +334,117 @@
   });
 
   {% if user.is_authenticated %}
-  // ── Authenticated: full sighting card maps ────────────────────────────────
   sightingsData.forEach(function(s) {
     const el = document.getElementById('map-' + s.id);
     if (el) {
-      const map = L.map(el).setView([s.lat, s.lng], 13);
+      const map = L.map(el, {
+        dragging: false,
+        touchZoom: false,
+        scrollWheelZoom: false,
+        doubleClickZoom: false,
+        boxZoom: false,
+        keyboard: false,
+        zoomControl: false,
+        attributionControl: false,
+      }).setView([s.lat, s.lng], 13);
+
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap'
+        attribution: '&copy; OpenStreetMap contributors',
       }).addTo(map);
+
       L.marker([s.lat, s.lng], {icon: redIcon}).addTo(map).bindPopup(s.bird);
     }
   });
 
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+
+  document.addEventListener('click', function(e) {
+    if (e.target.matches('.like-btn') || e.target.closest('.like-btn')) {
+      const btn = e.target.closest('.like-btn');
+      const id = btn.getAttribute('data-id');
+      fetch(`/sightings/api/like/${id}/`, {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': getCookie('csrftoken')
+        }
+      }).then(r => r.json()).then(data => {
+        const countSpan = btn.querySelector('.like-count');
+        if (countSpan) countSpan.textContent = `(${data.count})`;
+        btn.firstChild.textContent = data.liked ? 'Unlike' : 'Like';
+      }).catch(() => {});
+      return;
+    }
+
+    if (e.target.matches('.comment-btn') || e.target.closest('.comment-btn')) {
+      const btn = e.target.closest('.comment-btn');
+      const id = btn.getAttribute('data-id');
+      const container = document.getElementById('comments-' + id);
+      if (!container) return;
+
+      if (container.style.display === 'none') {
+        container.style.display = 'block';
+        fetch(`/sightings/api/comments/${id}/`)
+          .then(r => r.json())
+          .then(data => {
+            const list = document.getElementById('comments-list-' + id);
+            list.innerHTML = '';
+            (data.results || []).forEach(c => {
+              const div = document.createElement('div');
+              div.style.padding = '0.4rem 0';
+              div.style.borderBottom = '1px solid #f0f0f0';
+              div.innerHTML = `<strong>${c.user}</strong>: ${c.text} <br/><small style="color:#666">${new Date(c.timestamp).toLocaleString()}</small>`;
+              list.appendChild(div);
+            });
+          });
+      } else {
+        container.style.display = 'none';
+      }
+      return;
+    }
+
+    if (e.target.matches('.comment-submit') || e.target.closest('.comment-submit')) {
+      const btn = e.target.closest('.comment-submit');
+      const id = btn.getAttribute('data-id');
+      const input = document.getElementById('comment-input-' + id);
+      if (!input) return;
+
+      const text = input.value.trim();
+      if (!text) return;
+
+      const formData = new FormData();
+      formData.append('text', text);
+      fetch(`/sightings/api/add-comment/${id}/`, {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: formData
+      }).then(r => r.json()).then(data => {
+        if (data.error) return;
+        const list = document.getElementById('comments-list-' + id);
+        const div = document.createElement('div');
+        div.style.padding = '0.4rem 0';
+        div.style.borderBottom = '1px solid #f0f0f0';
+        div.innerHTML = `<strong>${data.user}</strong>: ${data.text} <br/><small style="color:#666">${new Date(data.timestamp).toLocaleString()}</small>`;
+        list.insertBefore(div, list.firstChild);
+        input.value = '';
+      }).catch(() => {});
+    }
+  });
   {% else %}
-  // ── Guest: landing page preview maps ──────────────────────────────────────
   sightingsData.slice(0, 6).forEach(function(s) {
     const el = document.getElementById('lp-map-' + s.id);
     if (el) {
@@ -368,9 +459,7 @@
     }
   });
 
-  // ── Transparent header on scroll ──────────────────────────────────────────
   const header = document.getElementById('site-header');
-  const hero = document.getElementById('lp-hero');
 
   function updateHeader() {
     if (window.scrollY > 60) {

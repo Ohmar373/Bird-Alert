@@ -42,3 +42,25 @@ class Sighting(models.Model):
     
     def __str__(self):
         return f"{self.bird_species.common_name} sighted by {self.user.username} on {self.timestamp.strftime('%Y-%m-%d %H:%M:%S')}"
+
+
+class Like(models.Model):
+    user = models.ForeignKey('auth.User', on_delete=models.CASCADE)
+    sighting = models.ForeignKey(Sighting, on_delete=models.CASCADE)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'sighting')
+
+    def __str__(self):
+        return f"{self.user.username} likes {self.sighting.id}"
+
+
+class Comment(models.Model):
+    user = models.ForeignKey('auth.User', on_delete=models.CASCADE)
+    sighting = models.ForeignKey(Sighting, on_delete=models.CASCADE)
+    text = models.TextField()
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Comment by {self.user.username} on {self.sighting.id}" 
