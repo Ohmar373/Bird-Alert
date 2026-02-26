@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block title %}Discover - Bird Alert{% endblock %}
+
+{% block content %}
+
+<h2 class="title">Discover</h2>
+<div id="map"></div>
+
+<div id="controls">
+  <input id="search_input" placeholder="Search for a bird (common name)..." />
+  <button id="search_btn">Search</button>
+  <button id="recent_btn">Show Recent Sightings</button>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  const map = L.map('map').setView([26.3017, -98.1633], 13);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap contributors'
+  }).addTo(map);
+
+  let markerGroup = L.layerGroup().addTo(map);
+  let lockedMarker = null;
+
+  function lockMarker(m) {
+    lockedMarker = m;
+    m.openPopup();
+    try {
+      map.setView(m.getLatLng(), 15);
+    } catch (e) {}
+  }
+
+  function unlockMarker() {
+    if (lockedMarker) {
+      try { lockedMarker.closePopup(); } catch (e) {}
+      lockedMarker = null;
+    }
+  }
+
+  // On map click: show popup with Add Sighting link
+    map.on('click', function (e) {
+      // clicking the map clears any locked marker
+      unlockMarker();
+
+      var lat = e.latlng.lat;
+      var lng = e.latlng.lng;
+
+      var baseUrl = "{% url 'sightings:sighting_form' %}";
+      var addUrl = baseUrl + "?lat=" + lat + "&lng=" + lng;
+
+      L.popup()
+      .setLatLng(e.latlng)
+      .setContent(`
+        <div style="text-align:center;">
+          <p>New Sighting Here?</p>
+          <a href="${addUrl}" class="btn" style="background-color: #00a2ff; color: white; padding: 8px 12px; border-radius: 4px; text-decoration: none; display: inline-block;">Add my Sighting</a>
+        </div>
+      `)
+      .openOn(map);
+    });
+
+  // Helpers to fetch and render sightings
+  // species filter removed — searching uses text query only
+
+  function clearMarkers() { markerGroup.clearLayers(); }
+
+  function renderSightings(items) {
+    clearMarkers();
+    items.forEach(s => {
+      const m = L.marker([s.lat, s.lng]);
+      m.bindPopup(`<strong>${s.common_name}</strong><br/><small>${new Date(s.timestamp).toLocaleString()}</small><br/><small>Observed by: ${s.user}</small>`);
+      // Hover shows popup only when not locked
+      m.on('mouseover', function() { if (!lockedMarker) this.openPopup(); });
+      m.on('mouseout', function() { if (!lockedMarker) this.closePopup(); });
+      // Click locks the marker (focuses and keeps popup open) until the map is clicked
+      m.on('click', function(e) {
+        if (lockedMarker && lockedMarker === this) {
+          // clicking same marker toggles the lock off
+          unlockMarker();
+        } else {
+          if (lockedMarker) unlockMarker();
+          lockMarker(this);
+        }
+      });
+      markerGroup.addLayer(m);
+    });
+    if (items.length > 0) {
+      const latLngs = items.map(i => [i.lat, i.lng]);
+      map.fitBounds(latLngs, { maxZoom: 15, padding: [40,40] });
+    }
+  }
+
+  async function searchSightings() {
+    const q = document.getElementById('search_input').value.trim();
+    let url = '{% url "sightings:search_sightings" %}';
+    const params = new URLSearchParams();
+    if (q) params.set('q', q);
+    const res = await fetch(url + '?' + params.toString());
+    const data = await res.json();
+    renderSightings(data.results || []);
+  }
+
+  document.getElementById('search_btn').addEventListener('click', searchSightings);
+  document.getElementById('recent_btn').addEventListener('click', searchSightings);
+
+  // no species list to populate
+    // initial load: fetch recent sightings so markers appear immediately
+    document.addEventListener('DOMContentLoaded', function() {
+      searchSightings();
+    });
+</script>
+{% endblock %}
