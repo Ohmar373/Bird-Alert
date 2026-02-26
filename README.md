@@ -283,3 +283,5 @@ Senior Project – 2025–2026
 ## 📜 License
 
 This project is for academic and educational purposes. License details may be added in the future.
+
+---
