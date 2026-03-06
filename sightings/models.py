@@ -37,6 +37,7 @@ class Sighting(models.Model):
     weather_conditions = models.CharField(max_length=100, help_text = "e.g., Sunny, Cloudy, Rainy")
     timestamp = models.DateTimeField(auto_now_add=True)
     description = models.TextField(blank=True)
+    image = models.ImageField(upload_to='sighting_images/', blank=True, null=True)
     
     location_name = models.CharField(max_length = 200, blank = True, null = True)
     
