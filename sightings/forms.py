@@ -13,12 +13,13 @@ class SightingForm(forms.ModelForm):
     
     class Meta:
         model = Sighting
-        fields = ['bird_species', 'latitude', 'longitude', 'weather_conditions', 'description']
+        fields = ['bird_species', 'latitude', 'longitude', 'weather_conditions', 'description', 'image']
         widgets = {
             'latitude': forms.NumberInput(attrs={'type': 'hidden'}),
             'longitude': forms.NumberInput(attrs={'type': 'hidden'}),
             'weather_conditions': forms.TextInput(attrs={'placeholder': 'e.g., Sunny, Cloudy, Rainy'}),
             'description': forms.Textarea(attrs={'rows': 3}),
+            'image': forms.ClearableFileInput(attrs={'accept': 'image/*'}),
         }
     
     def clean_bird_species(self):
