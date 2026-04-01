@@ -4,6 +4,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
 from sightings import utils
+from sightings.bird_detection import identify_bird_species
 
 from .forms import SightingForm
 from .models import BIRD_CATEGORY_CHOICES, BirdSpecies, Comment, Like, Sighting
@@ -26,7 +27,8 @@ def sighting_form(request):
         if form.is_valid():
             sighting = form.save(commit=False)
             sighting.user = request.user
-            sighting.location_name = utils.get_location_name(sighting.latitude, sighting.longitude)
+            if sighting.latitude and sighting.longitude:
+                sighting.location_name = utils.get_location_name(sighting.latitude, sighting.longitude)
             sighting.save()
             return redirect("index")
     else:
@@ -181,6 +183,64 @@ def add_comment(request, sighting_id):
             "timestamp": comment.timestamp.isoformat(),
         }
     )
+
+
+@login_required
+def camera_detection(request):
+    """Render the bird detection camera page."""
+    return render(request, "sightings/camera_detection.html")
+
+
+@login_required
+@require_POST
+def detect_bird_species(request):
+    """
+    API endpoint for bird species detection from uploaded image.
+    
+    Receives an image file and returns likely bird species matches.
+    
+    Args:
+        image: Uploaded image file
+        
+    Returns:
+        JSON response with detected species:
+        {
+            'success': bool,
+            'species': [
+                {
+                    'id': int,
+                    'common_name': str,
+                    'scientific_name': str,
+                    'category': str,
+                    'confidence': float
+                }
+            ],
+            'error': str (if applicable)
+        }
+    """
+    
+    if 'image' not in request.FILES:
+        return JsonResponse({
+            'success': False,
+            'error': 'No image provided'
+        }, status=400)
+    
+    try:
+        image_file = request.FILES['image']
+        
+        # Identify bird species from image
+        species_list = identify_bird_species(image_file)
+        
+        return JsonResponse({
+            'success': True,
+            'species': species_list
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': f'Error processing image: {str(e)}'
+        }, status=500)
 
 
 @login_required

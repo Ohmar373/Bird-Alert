@@ -31,10 +31,10 @@ class Sighting(models.Model):
     user = models.ForeignKey('auth.User', on_delete=models.CASCADE)
     bird_species = models.ForeignKey(BirdSpecies, on_delete=models.CASCADE)
     
-    latitude = models.FloatField()
-    longitude = models.FloatField()
+    latitude = models.FloatField(null=True, blank=True)
+    longitude = models.FloatField(null=True, blank=True)
     
-    weather_conditions = models.CharField(max_length=100, help_text = "e.g., Sunny, Cloudy, Rainy")
+    weather_conditions = models.CharField(max_length=100, blank=True, help_text="e.g., Sunny, Cloudy, Rainy")
     timestamp = models.DateTimeField(auto_now_add=True)
     description = models.TextField(blank=True)
     image = models.ImageField(upload_to='sighting_images/', blank=True, null=True)
