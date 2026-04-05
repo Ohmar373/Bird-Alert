@@ -44,6 +44,16 @@
 </header>
 
 <main>
+  {% if messages %}
+    <div style="position: fixed; top: 80px; right: 1.5rem; z-index: 9999; width: 320px;">
+      {% for message in messages %}
+        <div class="message {{ message.tags }}" style="margin-bottom: 0.5rem;">
+          {% if 'info' in message.tags %}{{ message|upper }}{% else %}{{ message }}{% endif %}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
   {% block content %}
   {% endblock %}
 </main>

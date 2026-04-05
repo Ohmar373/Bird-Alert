@@ -3,14 +3,16 @@ from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.models import User
+from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
+from django.core.exceptions import MultipleObjectsReturned
 from django.db.models import Count, Exists, OuterRef, Value
 from django.shortcuts import redirect, render
 from django.template.loader import get_template
 
 from sightings.models import Like, Sighting
 
-from .forms import UserRegisterForm
+from .forms import ForgotUsernameForm, UserRegisterForm
 
 
 # index view
@@ -51,7 +53,7 @@ def register(request):
             # mailing functionality
             htmly = get_template("user/Email.html")
             d = {"username": username}
-            subject, from_email, to = "Welcome to Bird Alert!", "birdalert2026@gmail.com", email
+            subject, from_email, to = "Welcome to Bird Alert!", settings.DEFAULT_FROM_EMAIL, email
             html_content = htmly.render(d)
             text_content = f"Account created for {username} you can now log in."
             msg = EmailMultiAlternatives(subject, text_content, from_email, [to])
@@ -69,19 +71,64 @@ def register(request):
 # login view
 def Login(request):
     if request.method == "POST":
-        username = request.POST["username"]
-        password = request.POST["password"]
+        identity = request.POST.get("username", "").strip()
+        password = request.POST.get("password", "")
+
+        username = identity
+        matched_user = User.objects.filter(email__iexact=identity).only("username").first()
+        if not matched_user:
+            matched_user = User.objects.filter(username__iexact=identity).only("username").first()
+        if matched_user:
+            username = matched_user.username
+
         user = authenticate(request, username=username, password=password)
 
         if user is not None:
             login(request, user)
-            messages.success(request, f"Welcome {username}!!")
+            messages.success(request, f"Welcome {user.username}")
             return redirect("index")
 
         messages.info(request, "Username OR password is incorrect")
 
     form = AuthenticationForm()
-    return render(request, "user/login.html", {"form": form, "title": "Login Here"})
+    forgot_username_form = ForgotUsernameForm()
+    return render(
+        request,
+        "user/login.html",
+        {"form": form, "forgot_username_form": forgot_username_form, "title": "Login Here"},
+    )
+
+
+def forgot_username(request):
+    if request.method != "POST":
+        return redirect("login")
+
+    form = ForgotUsernameForm(request.POST)
+    if not form.is_valid():
+        messages.error(request, "Please enter a valid email address.")
+        return redirect("login")
+
+    email = form.cleaned_data["email"].strip()
+
+    try:
+        user = User.objects.get(email__iexact=email)
+    except User.DoesNotExist:
+        messages.error(request, "No account was found with that email.")
+        return redirect("login")
+    except MultipleObjectsReturned:
+        user = User.objects.filter(email__iexact=email).order_by("id").first()
+
+    subject = "Your Bird Alert Username"
+    from_email = settings.DEFAULT_FROM_EMAIL
+    text_content = f"Your username is: {user.username}"
+    html_content = f"<p>Your Bird Alert username is: <strong>{user.username}</strong></p>"
+
+    msg = EmailMultiAlternatives(subject, text_content, from_email, [email])
+    msg.attach_alternative(html_content, "text/html")
+    msg.send()
+
+    messages.success(request, "Your username has been sent to your email.")
+    return redirect("login")
 
 
 # sightings view

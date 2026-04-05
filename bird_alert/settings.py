@@ -2,11 +2,15 @@ import os
 from dotenv import load_dotenv
 from pathlib import Path
 
-# 1. Load the .env file immediately so all variables below can access it
-load_dotenv()
-
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Load .env from project root first, then fall back to bird_alert/.env.
+env_paths = [BASE_DIR / '.env', BASE_DIR / 'bird_alert' / '.env']
+for env_path in env_paths:
+    if env_path.exists():
+        load_dotenv(env_path)
+        break
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
@@ -90,19 +94,19 @@ STATICFILES_DIRS = [
     BASE_DIR / 'public',
 ]
 
-# 4. Email Configuration - Pulling from your .env
-# Use console backend for development (prints emails to terminal)
-# Use SMTP backend for production (sends real emails)
-if DEBUG:
-    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-else:
-    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# Email configuration.
+# Environment variable overrides let you send real email in development.
+EMAIL_BACKEND = os.getenv(
+    'EMAIL_BACKEND',
+    'django.core.mail.backends.console.EmailBackend' if DEBUG else 'django.core.mail.backends.smtp.EmailBackend',
+)
 
 EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
 EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587))
 EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True') == 'True'
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER or 'no-reply@birdalert.local')
 
 # Media files (user uploaded)
 MEDIA_URL = '/media/'

@@ -14,9 +14,86 @@
       </div>
       <button type="submit" class="submit-btn">Log In</button>
     </form>
-    <p class="form-link" style="margin-top: 1rem;"><a href="{% url 'password_reset' %}">Forgot Password?</a></p>
+    <p class="form-link" style="margin-top: 1rem;"><a href="#forgot-username-form" id="forgot-username-toggle">Forgot Username?</a></p>
+    <p class="form-link" style="margin-top: 0.5rem;"><a href="{% url 'password_reset' %}">Forgot Password?</a></p>
+
+    <form id="forgot-username-form" method="POST" action="{% url 'forgot_username' %}" style="display: none; margin-top: 1rem;">
+      {% csrf_token %}
+      <div class="form-group">
+        {{ forgot_username_form.as_p }}
+      </div>
+      <button type="submit" class="submit-btn">Send Username</button>
+    </form>
+
     <p class="form-link">Don't have an account? <a href="{% url 'register' %}">Sign Up</a></p>
   </div>
 </div>
 
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  (function () {
+    const toggle = document.getElementById("forgot-username-toggle");
+    const form = document.getElementById("forgot-username-form");
+    const eyeIcon = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"></path><circle cx="12" cy="12" r="3"></circle></svg>';
+
+    function addPasswordToggles() {
+      const passwordInputs = document.querySelectorAll('input[type="password"]');
+
+      passwordInputs.forEach(function (passwordInput) {
+        if (passwordInput.dataset.eyeReady === "true") {
+          return;
+        }
+
+        const wrapper = document.createElement("div");
+        wrapper.style.position = "relative";
+
+        passwordInput.parentNode.insertBefore(wrapper, passwordInput);
+        wrapper.appendChild(passwordInput);
+
+        passwordInput.style.paddingRight = "3rem";
+
+        const eyeButton = document.createElement("button");
+        eyeButton.type = "button";
+        eyeButton.setAttribute("aria-label", "Show password");
+        eyeButton.title = "Show password";
+        eyeButton.style.position = "absolute";
+        eyeButton.style.top = "50%";
+        eyeButton.style.right = "0.5rem";
+        eyeButton.style.transform = "translateY(-50%)";
+        eyeButton.style.display = "flex";
+        eyeButton.style.alignItems = "center";
+        eyeButton.style.justifyContent = "center";
+        eyeButton.style.width = "2rem";
+        eyeButton.style.height = "2rem";
+        eyeButton.style.border = "none";
+        eyeButton.style.borderRadius = "4px";
+        eyeButton.style.background = "transparent";
+        eyeButton.style.cursor = "pointer";
+        eyeButton.style.color = "#666";
+        eyeButton.innerHTML = eyeIcon;
+
+        eyeButton.addEventListener("click", function () {
+          const isHidden = passwordInput.type === "password";
+          passwordInput.type = isHidden ? "text" : "password";
+          eyeButton.setAttribute("aria-label", isHidden ? "Hide password" : "Show password");
+          eyeButton.title = isHidden ? "Hide password" : "Show password";
+        });
+
+        wrapper.appendChild(eyeButton);
+        passwordInput.dataset.eyeReady = "true";
+      });
+    }
+
+    if (toggle && form) {
+      toggle.addEventListener("click", function (event) {
+        event.preventDefault();
+        form.style.display = form.style.display === "none" ? "block" : "none";
+      });
+    }
+
+    addPasswordToggles();
+  })();
+</script>
 {% endblock %}
