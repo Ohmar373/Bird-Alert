@@ -3,6 +3,57 @@
 
 {% block title %}Edit Profile{% endblock %}
 
+{% block extra_css %}
+<style>
+  .password-input-wrap {
+    position: relative;
+  }
+
+  .password-input-wrap input {
+    padding-right: 3rem;
+  }
+
+  .password-toggle-btn {
+    position: absolute;
+    top: 50%;
+    right: 0.6rem;
+    transform: translateY(-50%);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border: 0;
+    background: transparent;
+    color: #5f656f;
+    cursor: pointer;
+  }
+
+  .password-toggle-btn:hover {
+    color: #2f3640;
+  }
+
+  .password-toggle-btn .eye-closed {
+    display: none;
+  }
+
+  .form-group input[type="checkbox"][name$="-clear"] {
+    display: inline-block;
+    vertical-align: middle;
+    margin: 0 0.35rem 0 0.5rem;
+  }
+
+  .form-group label[for$="-clear_id"] {
+    display: inline-flex;
+    align-items: center;
+    vertical-align: middle;
+    margin: 0;
+    line-height: 1;
+    white-space: nowrap;
+  }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="card">
   <h2>Edit Profile</h2>
@@ -35,23 +86,92 @@
 
     <div class="form-group">
       {{ password_form.old_password.label_tag }}
-      {{ password_form.old_password }}
+      <div class="password-input-wrap">
+        {{ password_form.old_password }}
+        <button type="button" class="password-toggle-btn" data-target="id_old_password" aria-label="Show old password" title="Show old password">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path class="eye-open" d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"></path>
+            <circle class="eye-open" cx="12" cy="12" r="3"></circle>
+            <path class="eye-closed" d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"></path>
+            <circle class="eye-closed" cx="12" cy="12" r="3"></circle>
+            <path class="eye-closed" d="M3 3l18 18"></path>
+          </svg>
+        </button>
+      </div>
       {{ password_form.old_password.errors }}
     </div>
 
     <div class="form-group">
       {{ password_form.new_password1.label_tag }}
-      {{ password_form.new_password1 }}
+      <div class="password-input-wrap">
+        {{ password_form.new_password1 }}
+        <button type="button" class="password-toggle-btn" data-target="id_new_password1" aria-label="Show new password" title="Show new password">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path class="eye-open" d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"></path>
+            <circle class="eye-open" cx="12" cy="12" r="3"></circle>
+            <path class="eye-closed" d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"></path>
+            <circle class="eye-closed" cx="12" cy="12" r="3"></circle>
+            <path class="eye-closed" d="M3 3l18 18"></path>
+          </svg>
+        </button>
+      </div>
       {{ password_form.new_password1.errors }}
     </div>
 
     <div class="form-group">
       {{ password_form.new_password2.label_tag }}
-      {{ password_form.new_password2 }}
+      <div class="password-input-wrap">
+        {{ password_form.new_password2 }}
+        <button type="button" class="password-toggle-btn" data-target="id_new_password2" aria-label="Show new password confirmation" title="Show new password confirmation">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path class="eye-open" d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"></path>
+            <circle class="eye-open" cx="12" cy="12" r="3"></circle>
+            <path class="eye-closed" d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"></path>
+            <circle class="eye-closed" cx="12" cy="12" r="3"></circle>
+            <path class="eye-closed" d="M3 3l18 18"></path>
+          </svg>
+        </button>
+      </div>
       {{ password_form.new_password2.errors }}
     </div>
 
     <button class="btn btn-primary" type="submit" name="change_password">Change Password</button>
   </form>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  (function () {
+    const toggleButtons = document.querySelectorAll('.password-toggle-btn');
+
+    function setIconState(button, isVisible) {
+      const openParts = button.querySelectorAll('.eye-open');
+      const closedParts = button.querySelectorAll('.eye-closed');
+      openParts.forEach((part) => {
+        part.style.display = isVisible ? 'none' : 'inline';
+      });
+      closedParts.forEach((part) => {
+        part.style.display = isVisible ? 'inline' : 'none';
+      });
+    }
+
+    toggleButtons.forEach((button) => {
+      const inputId = button.getAttribute('data-target');
+      const input = document.getElementById(inputId);
+
+      if (!input) {
+        return;
+      }
+
+      setIconState(button, false);
+
+      button.addEventListener('click', function () {
+        const showPassword = input.type === 'password';
+        input.type = showPassword ? 'text' : 'password';
+        setIconState(button, showPassword);
+      });
+    });
+  })();
+</script>
 {% endblock %}
