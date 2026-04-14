@@ -4,3 +4,5 @@ python-dotenv==1.2.1
 sqlparse==0.5.5
 requests==2.31.0
 Pillow
+google-cloud-vision==3.7.4
+google-genai

@@ -4,14 +4,12 @@ from django.contrib import messages
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth import update_session_auth_hash
 from .forms import UserForm, ProfileForm
+from .models import Profile
 
 
 @login_required
 def edit_profile(request):
-    try:
-        profile = request.user.profile
-    except Exception:
-        profile = None
+    profile, _ = Profile.objects.get_or_create(user=request.user)
 
     password_form = None
 

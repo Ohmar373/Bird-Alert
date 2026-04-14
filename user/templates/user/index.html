@@ -13,14 +13,6 @@
 
 {% block content %}
 
-{% if messages %}
-  <div style="position: fixed; top: 80px; right: 1.5rem; z-index: 9999; width: 320px;">
-    {% for message in messages %}
-    <div class="message" style="margin-bottom: 0.5rem;">{{ message }}</div>
-    {% endfor %}
-  </div>
-{% endif %}
-
 {% if user.is_authenticated %}
 
 <section class="feed-hero">

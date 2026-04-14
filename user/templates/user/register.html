@@ -19,3 +19,75 @@
 </div>
 
 {% endblock %}
+
+{% block extra_js %}
+<script>
+  (function () {
+    const eyeIcon = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"></path><circle cx="12" cy="12" r="3"></circle></svg>';
+
+    function addPasswordToggles() {
+      const passwordInputs = document.querySelectorAll('input[type="password"]');
+
+      passwordInputs.forEach(function (passwordInput) {
+        if (passwordInput.dataset.eyeReady === "true") {
+          return;
+        }
+
+        const wrapper = document.createElement("div");
+        wrapper.style.position = "relative";
+
+        passwordInput.parentNode.insertBefore(wrapper, passwordInput);
+        wrapper.appendChild(passwordInput);
+
+        passwordInput.style.paddingRight = "3rem";
+
+        const eyeButton = document.createElement("button");
+        eyeButton.type = "button";
+        eyeButton.setAttribute("aria-label", "Show password");
+        eyeButton.title = "Show password";
+        eyeButton.style.position = "absolute";
+        eyeButton.style.top = "50%";
+        eyeButton.style.right = "0.5rem";
+        eyeButton.style.transform = "translateY(-50%)";
+        eyeButton.style.display = "flex";
+        eyeButton.style.alignItems = "center";
+        eyeButton.style.justifyContent = "center";
+        eyeButton.style.width = "2rem";
+        eyeButton.style.height = "2rem";
+        eyeButton.style.border = "none";
+        eyeButton.style.borderRadius = "4px";
+        eyeButton.style.background = "transparent";
+        eyeButton.style.cursor = "pointer";
+        eyeButton.style.color = "#666";
+        eyeButton.innerHTML = eyeIcon;
+
+        eyeButton.addEventListener("click", function () {
+          const isHidden = passwordInput.type === "password";
+          passwordInput.type = isHidden ? "text" : "password";
+          eyeButton.setAttribute("aria-label", isHidden ? "Hide password" : "Show password");
+          eyeButton.title = isHidden ? "Hide password" : "Show password";
+        });
+
+        wrapper.appendChild(eyeButton);
+        passwordInput.dataset.eyeReady = "true";
+      });
+    }
+
+    addPasswordToggles();
+
+    {% if form.errors %}
+    const errors = [
+      {% for field, field_errors in form.errors.items %}
+        {% for error in field_errors %}
+          "{{ error|escapejs }}",
+        {% endfor %}
+      {% endfor %}
+    ];
+
+    if (errors.length) {
+      alert("Please fix the following:\n\n" + errors.join("\n"));
+    }
+    {% endif %}
+  })();
+</script>
+{% endblock %}

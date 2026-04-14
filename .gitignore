@@ -3,6 +3,8 @@
 # ======================
 .env
 .env.*
+google-credentials.json
+credentials.json
 
 # ======================
 # Python
