@@ -18,10 +18,15 @@
 {% block extra_js %}
 <script>
   const map = L.map('map').setView([26.3017, -98.1633], 13);
+  const profileUrlTemplate = "{% url 'profile:user' '__USERNAME__' %}";
 
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; OpenStreetMap contributors'
-  }).addTo(map);
+  if (typeof createBaseTileLayer === 'function') {
+    createBaseTileLayer().addTo(map);
+  } else {
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+  }
 
   let markerGroup = L.layerGroup().addTo(map);
   let lockedMarker = null;
@@ -66,13 +71,29 @@
   // Helpers to fetch and render sightings
   // species filter removed — searching uses text query only
 
+  function buildProfileUrl(username) {
+    return profileUrlTemplate.replace('__USERNAME__', encodeURIComponent(username));
+  }
+
+  function escapeHtml(value) {
+    return String(value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
   function clearMarkers() { markerGroup.clearLayers(); }
 
   function renderSightings(items) {
     clearMarkers();
     items.forEach(s => {
       const m = L.marker([s.lat, s.lng]);
-      m.bindPopup(`<strong>${s.common_name}</strong><br/><small>${new Date(s.timestamp).toLocaleString()}</small><br/><small>Observed by: ${s.user}</small>`);
+      const safeName = escapeHtml(s.common_name);
+      const safeUser = escapeHtml(s.user);
+      const profileUrl = buildProfileUrl(s.user);
+      m.bindPopup(`<strong>${safeName}</strong><br/><small>${new Date(s.timestamp).toLocaleString()}</small><br/><small>Observed by: <a href="${profileUrl}">${safeUser}</a></small>`);
       // Hover shows popup only when not locked
       m.on('mouseover', function() { if (!lockedMarker) this.openPopup(); });
       m.on('mouseout', function() { if (!lockedMarker) this.closePopup(); });

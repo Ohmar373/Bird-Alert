@@ -28,7 +28,7 @@
       <li><a href="{% url 'index' %}">Home</a></li>
       {% if user.is_authenticated %}
         <li><a href="{% url 'sightings:discover' %}">Discover</a></li>
-        <li><a href="{% url 'profile:edit' %}">Profile</a></li>
+        <li><a href="{% url 'profile:view' %}">Profile</a></li>
         <li>
           <form method="post" action="{% url 'logout' %}" style="display: inline; margin: 0;">
             {% csrf_token %}
@@ -59,6 +59,43 @@
 </main>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+  (function () {
+    // Prefer OSM, but fail over to CARTO if OSM tiles are blocked (e.g., missing Referer header).
+    window.createBaseTileLayer = function createBaseTileLayer(options) {
+      const userOptions = options || {};
+      const osmLayer = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: '&copy; OpenStreetMap contributors',
+        maxZoom: 19,
+        referrerPolicy: "strict-origin-when-cross-origin",
+        ...userOptions,
+      });
+
+      const cartoLayer = L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
+        attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+        maxZoom: 20,
+        subdomains: "abcd",
+        ...userOptions,
+      });
+
+      let hasSwitched = false;
+      osmLayer.on("tileerror", function () {
+        if (hasSwitched) {
+          return;
+        }
+
+        hasSwitched = true;
+        const currentMap = osmLayer._map;
+        if (currentMap) {
+          currentMap.removeLayer(osmLayer);
+          cartoLayer.addTo(currentMap);
+        }
+      });
+
+      return osmLayer;
+    };
+  })();
+</script>
 
 {% block extra_js %}{% endblock %}
 
