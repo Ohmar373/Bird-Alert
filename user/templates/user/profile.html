@@ -1,0 +1,350 @@
+{% extends "base.html" %}
+
+{% block title %}{% if is_owner %}My Profile - Bird Alert{% else %}{{ profile_user.username }}'s Profile - Bird Alert{% endif %}{% endblock %}
+
+{% block extra_css %}
+<style>
+  .profile-wrap {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 0.25rem 0 2rem;
+  }
+
+  .profile-hero {
+    background: linear-gradient(135deg, #e7f3e6 0%, #d8ebd5 100%);
+    border: 1px solid #c8dfc4;
+    border-radius: 16px;
+    padding: 1.4rem;
+    margin-bottom: 1.2rem;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 1rem;
+    align-items: center;
+  }
+
+  .profile-avatar {
+    width: 88px;
+    height: 88px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 3px solid #fff;
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.1);
+    background: #2f6f49;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.6rem;
+    font-weight: 700;
+  }
+
+  .profile-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .profile-name {
+    margin: 0;
+    line-height: 1.1;
+    font-size: 1.8rem;
+  }
+
+  .profile-handle {
+    margin: 0.25rem 0 0.4rem;
+    color: #4d5d4e;
+    font-size: 0.95rem;
+  }
+
+  .profile-bio {
+    margin: 0;
+    color: #253227;
+    max-width: 640px;
+    white-space: pre-line;
+  }
+
+  .profile-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    align-items: stretch;
+  }
+
+  .profile-actions .btn {
+    text-align: center;
+    min-width: 165px;
+  }
+
+  .profile-stats {
+    margin-top: 1rem;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(120px, 1fr));
+    gap: 0.7rem;
+  }
+
+  .stat-box {
+    background: #fff;
+    border: 1px solid #dbe8da;
+    border-radius: 10px;
+    padding: 0.8rem 0.9rem;
+  }
+
+  .stat-number {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #1f2c21;
+    margin: 0;
+    line-height: 1.2;
+  }
+
+  .stat-label {
+    margin: 0.25rem 0 0;
+    color: #5a6a5b;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .posts-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin: 0.1rem 0 0.9rem;
+  }
+
+  .posts-header h2 {
+    margin: 0;
+    font-size: 1.45rem;
+  }
+
+  .posts-header p {
+    margin: 0;
+    color: #5a655c;
+    font-size: 0.95rem;
+  }
+
+  .posts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1rem;
+  }
+
+  .post-card {
+    background: #fff;
+    border: 1px solid #e1e8df;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(26, 44, 30, 0.06);
+    display: flex;
+    flex-direction: column;
+    min-height: 320px;
+  }
+
+  .post-media {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    background: #f4f8f2;
+  }
+
+  .post-media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .post-media-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #406244;
+    font-size: 1.05rem;
+    font-weight: 600;
+    background:
+      radial-gradient(circle at 20% 20%, #e3f0e0, #d1e5cd 45%, #bfd9bb 100%);
+  }
+
+  .post-body {
+    padding: 0.9rem;
+    display: grid;
+    gap: 0.55rem;
+  }
+
+  .post-top {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.6rem;
+  }
+
+  .post-top h3 {
+    margin: 0;
+    font-size: 1.03rem;
+    line-height: 1.2;
+  }
+
+  .post-date {
+    color: #6b796d;
+    font-size: 0.82rem;
+    white-space: nowrap;
+  }
+
+  .post-description {
+    margin: 0;
+    color: #2f3a31;
+    font-size: 0.93rem;
+    line-height: 1.45;
+  }
+
+  .post-meta {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+    color: #59645b;
+    font-size: 0.84rem;
+  }
+
+  .empty-posts {
+    border: 2px dashed #c9d8c6;
+    background: #f7faf6;
+    border-radius: 14px;
+    padding: 2rem 1rem;
+    text-align: center;
+    color: #536055;
+  }
+
+  .empty-posts p {
+    margin: 0.2rem 0 1rem;
+  }
+
+  @media (max-width: 850px) {
+    .profile-hero {
+      grid-template-columns: 1fr;
+      text-align: center;
+    }
+
+    .profile-avatar {
+      margin: 0 auto;
+    }
+
+    .profile-actions {
+      width: 100%;
+      max-width: 260px;
+      margin: 0.2rem auto 0;
+    }
+
+    .profile-stats {
+      grid-template-columns: repeat(2, minmax(120px, 1fr));
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="profile-wrap">
+  <section class="profile-hero">
+    <div class="profile-avatar">
+      {% if profile.image %}
+        <img src="{{ profile.image.url }}" alt="{{ profile_user.username }} profile image">
+      {% else %}
+        {{ profile_user.username|first|upper }}
+      {% endif %}
+    </div>
+
+    <div>
+      <h1 class="profile-name">{{ profile.display_name|default:profile_user.username }}</h1>
+      <p class="profile-handle">@{{ profile_user.username }}</p>
+      <p class="profile-bio">
+        {% if profile.bio %}
+          {{ profile.bio }}
+        {% elif is_owner %}
+          Add your bio from Edit Profile so people know what kinds of birds you love spotting.
+        {% else %}
+          {{ profile_user.username }} has not added a bio yet.
+        {% endif %}
+      </p>
+
+      <div class="profile-stats">
+        <div class="stat-box">
+          <p class="stat-number">{{ stats.post_count }}</p>
+          <p class="stat-label">Posts</p>
+        </div>
+        <div class="stat-box">
+          <p class="stat-number">{{ stats.species_count }}</p>
+          <p class="stat-label">Species</p>
+        </div>
+        <div class="stat-box">
+          <p class="stat-number">{{ stats.likes_received }}</p>
+          <p class="stat-label">Likes</p>
+        </div>
+        <div class="stat-box">
+          <p class="stat-number">{{ stats.comments_received }}</p>
+          <p class="stat-label">Comments</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="profile-actions">
+      {% if is_owner %}
+        <a class="btn btn-primary" href="{% url 'profile:edit' %}">Edit Profile</a>
+        <a class="btn btn-secondary" href="{% url 'sightings:sighting_form' %}">New Sighting</a>
+      {% else %}
+        <a class="btn btn-secondary" href="{% url 'profile:view' %}">Back to My Profile</a>
+      {% endif %}
+    </div>
+  </section>
+
+  <section>
+    <div class="posts-header">
+      <h2>{% if is_owner %}Your Sightings{% else %}{{ profile.display_name|default:profile_user.username }}'s Sightings{% endif %}</h2>
+      <p>Newest first</p>
+    </div>
+
+    {% if sightings %}
+      <div class="posts-grid">
+        {% for sighting in sightings %}
+          <article class="post-card">
+            <div class="post-media">
+              {% if sighting.image %}
+                <img src="{{ sighting.image.url }}" alt="{{ sighting.bird_species.common_name }} sighting">
+              {% else %}
+                <div class="post-media-placeholder">{{ sighting.bird_species.common_name }}</div>
+              {% endif %}
+            </div>
+
+            <div class="post-body">
+              <div class="post-top">
+                <h3>{{ sighting.bird_species.common_name }}</h3>
+                <span class="post-date">{{ sighting.timestamp|date:"M j, Y" }}</span>
+              </div>
+
+              <p class="post-description">
+                {% if sighting.description %}
+                  {{ sighting.description|truncatechars:130 }}
+                {% else %}
+                  No description added for this sighting.
+                {% endif %}
+              </p>
+
+              <div class="post-meta">
+                <span>{% if sighting.location_name %}{{ sighting.location_name }}{% else %}Location pending{% endif %}</span>
+                <span>{{ sighting.like_count }} likes · {{ sighting.comment_count }} comments</span>
+              </div>
+            </div>
+          </article>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-posts">
+        <h3 style="margin: 0;">No posts yet</h3>
+        {% if is_owner %}
+          <p>Share your first bird sighting and start building your profile feed.</p>
+          <a class="btn btn-primary" href="{% url 'sightings:sighting_form' %}">Create First Post</a>
+        {% else %}
+          <p>{{ profile.display_name|default:profile_user.username }} has not shared any sightings yet.</p>
+        {% endif %}
+      </div>
+    {% endif %}
+  </section>
+</section>
+{% endblock %}

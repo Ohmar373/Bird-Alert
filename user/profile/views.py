@@ -1,10 +1,62 @@
-from django.shortcuts import render, redirect
+from django.contrib.auth import get_user_model, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
-from django.contrib import messages
 from django.contrib.auth.forms import PasswordChangeForm
-from django.contrib.auth import update_session_auth_hash
+from django.contrib import messages
+from django.db.models import Count
+from django.shortcuts import get_object_or_404, redirect, render
+
+from sightings.models import Comment, Like, Sighting
+
 from .forms import UserForm, ProfileForm
 from .models import Profile
+
+
+def _build_profile_context(profile_user):
+    profile, _ = Profile.objects.get_or_create(user=profile_user)
+
+    sightings = (
+        Sighting.objects.filter(user=profile_user)
+        .select_related("bird_species")
+        .annotate(
+            like_count=Count("like", distinct=True),
+            comment_count=Count("comment", distinct=True),
+        )
+        .order_by("-timestamp")
+    )
+
+    stats = {
+        "post_count": sightings.count(),
+        "species_count": sightings.values("bird_species_id").distinct().count(),
+        "likes_received": Like.objects.filter(sighting__user=profile_user).count(),
+        "comments_received": Comment.objects.filter(sighting__user=profile_user).count(),
+    }
+
+    return {
+        "profile": profile,
+        "profile_user": profile_user,
+        "sightings": sightings,
+        "stats": stats,
+    }
+
+
+@login_required
+def profile_view(request):
+    context = _build_profile_context(request.user)
+    context["is_owner"] = True
+    return render(request, "user/profile.html", context)
+
+
+@login_required
+def user_profile_view(request, username):
+    user_model = get_user_model()
+    profile_user = get_object_or_404(user_model, username__iexact=username)
+
+    if profile_user == request.user:
+        return redirect("profile:view")
+
+    context = _build_profile_context(profile_user)
+    context["is_owner"] = False
+    return render(request, "user/profile.html", context)
 
 
 @login_required
@@ -24,7 +76,7 @@ def edit_profile(request):
                 u_form.save()
                 p_form.save()
                 messages.success(request, 'Profile updated successfully.')
-                return redirect('profile:edit')
+                return redirect('profile:view')
 
         # password change
         if 'change_password' in request.POST:
@@ -32,7 +84,7 @@ def edit_profile(request):
                 user = password_form.save()
                 update_session_auth_hash(request, user)
                 messages.success(request, 'Password changed successfully.')
-                return redirect('profile:edit')
+                return redirect('profile:view')
             else:
                 messages.error(request, 'Please correct the errors below.')
     else:
