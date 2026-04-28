@@ -1,76 +1,138 @@
 {% extends "base.html" %}
 
 {% block title %}Discover - Bird Alert{% endblock %}
+{% block body_class %}discover-page{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+{% endblock %}
 
 {% block content %}
+<div id="discover-root">
 
-<h2 class="title">Discover</h2>
-<div id="map"></div>
+  <!-- Map -->
+  <div id="map"></div>
 
-<div id="controls">
-  <input id="search_input" placeholder="Search for a bird (common name)..." />
-  <button id="search_btn">Search</button>
-  <button id="recent_btn">Show Recent Sightings</button>
+  <!-- Controls panel -->
+  <div id="controls">
+    <div class="ctrl-search-row">
+      <div class="ctrl-search-wrap">
+        <svg class="ctrl-search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+        </svg>
+        <input id="search_input" placeholder="Search species…" autocomplete="off" />
+      </div>
+      <button id="search_btn" class="ctrl-btn-icon" title="Search">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="9 18 15 12 9 6"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="ctrl-filter-row">
+      <select id="category_filter">
+        <option value="">All categories</option>
+      </select>
+    </div>
+
+    <div id="result-count" class="ctrl-count">Loading…</div>
+
+    <button id="recent_btn" class="ctrl-btn-secondary">Show recent sightings</button>
+  </div>
+
+  <!-- Slide-in detail panel -->
+  <div id="detail-panel" class="detail-panel detail-panel--closed" aria-hidden="true">
+    <button id="detail-close" class="detail-close" aria-label="Close">&#x2715;</button>
+    <div id="detail-content" class="detail-content"></div>
+  </div>
+
+  <!-- Floating Action Button -->
+  <button id="fab-add" title="Log a new sighting">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+    </svg>
+    <span>Add Sighting</span>
+  </button>
+
+  <!-- Geolocation button -->
+  <button id="geolocate-btn" title="Go to my location">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="3"/>
+      <path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>
+      <circle cx="12" cy="12" r="9" stroke-dasharray="3 3"/>
+    </svg>
+  </button>
+
+  <!-- Loading overlay -->
+  <div id="map-loading" class="map-loading hidden">
+    <div class="map-loading-inner">
+      <div class="map-loading-spinner"></div>
+      <span>Loading</span>
+    </div>
+  </div>
+
+  <!-- Empty state -->
+  <div id="map-empty" class="map-empty hidden">
+    <div class="map-empty-inner">
+      <strong>No sightings found</strong>
+      <span>Try adjusting your search or filter</span>
+      <button onclick="clearSearch()" class="ctrl-btn-secondary"
+              style="margin-top:0.4rem;padding:0.35rem 1rem;width:auto">Clear</button>
+    </div>
+  </div>
+
 </div>
-
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 <script>
-  const map = L.map('map').setView([26.3017, -98.1633], 13);
+  // ── Map init ──────────────────────────────────────────────────────────────
+  const map = L.map('map', { zoomControl: false }).setView([26.3017, -98.1633], 13);
+  L.control.zoom({ position: 'bottomleft' }).addTo(map);
+
+  // CARTO Voyager — clean, colourful, great for birding maps
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/">CARTO</a>',
+    subdomains: 'abcd',
+    maxZoom: 20,
+  }).addTo(map);
+
   const profileUrlTemplate = "{% url 'profile:user' '__USERNAME__' %}";
 
-  if (typeof createBaseTileLayer === 'function') {
-    createBaseTileLayer().addTo(map);
-  } else {
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map);
-  }
+  // ── Marker cluster group ──────────────────────────────────────────────────
+  const markerGroup = L.markerClusterGroup({
+    maxClusterRadius: 50,
+    iconCreateFunction: function(cluster) {
+      return L.divIcon({
+        html: `<div class="cluster-icon">${cluster.getChildCount()}</div>`,
+        className: '',
+        iconSize: [38, 38],
+        iconAnchor: [19, 19],
+      });
+    },
+  });
+  markerGroup.addTo(map);
 
-  let markerGroup = L.layerGroup().addTo(map);
-  let lockedMarker = null;
+  // ── Custom bird icon ──────────────────────────────────────────────────────
+  const birdIcon = L.divIcon({
+    html: `<div class="bird-marker">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="white">
+        <path d="M23 7c-1.8-1.8-4.2-2.6-6.5-2.3L12 3l-4.5 1.7C5.2 4.4 2.8 5.2 1 7l4 3-2 4 4-1 1 3 4-4 4 4 1-3 4 1-2-4 4-3z"/>
+      </svg>
+    </div>`,
+    className: '',
+    iconSize: [30, 30],
+    iconAnchor: [15, 30],
+    popupAnchor: [0, -34],
+  });
 
-  function lockMarker(m) {
-    lockedMarker = m;
-    m.openPopup();
-    try {
-      map.setView(m.getLatLng(), 15);
-    } catch (e) {}
-  }
-
-  function unlockMarker() {
-    if (lockedMarker) {
-      try { lockedMarker.closePopup(); } catch (e) {}
-      lockedMarker = null;
-    }
-  }
-
-  // On map click: show popup with Add Sighting link
-    map.on('click', function (e) {
-      // clicking the map clears any locked marker
-      unlockMarker();
-
-      var lat = e.latlng.lat;
-      var lng = e.latlng.lng;
-
-      var baseUrl = "{% url 'sightings:sighting_form' %}";
-      var addUrl = baseUrl + "?lat=" + lat + "&lng=" + lng;
-
-      L.popup()
-      .setLatLng(e.latlng)
-      .setContent(`
-        <div style="text-align:center;">
-          <p>New Sighting Here?</p>
-          <a href="${addUrl}" class="btn" style="background-color: #00a2ff; color: white; padding: 8px 12px; border-radius: 4px; text-decoration: none; display: inline-block;">Add my Sighting</a>
-        </div>
-      `)
-      .openOn(map);
-    });
-
-  // Helpers to fetch and render sightings
-  // species filter removed — searching uses text query only
-
+  // ── Helpers ───────────────────────────────────────────────────────────────
   function buildProfileUrl(username) {
     return profileUrlTemplate.replace('__USERNAME__', encodeURIComponent(username));
   }
@@ -84,54 +146,359 @@
       .replace(/'/g, '&#039;');
   }
 
+  function getCsrfToken() {
+    const m = document.cookie.match(/csrftoken=([^;]+)/);
+    return m ? m[1] : '';
+  }
+
+  // ── Loading / empty state helpers ─────────────────────────────────────────
+  function showLoading() {
+    document.getElementById('map-loading').classList.remove('hidden');
+  }
+
+  function hideLoading() {
+    document.getElementById('map-loading').classList.add('hidden');
+  }
+
+  function showEmpty() {
+    document.getElementById('map-empty').classList.remove('hidden');
+  }
+
+  function hideEmpty() {
+    document.getElementById('map-empty').classList.add('hidden');
+  }
+
+  // ── Detail panel ──────────────────────────────────────────────────────────
+  const detailPanel = document.getElementById('detail-panel');
+  const detailContent = document.getElementById('detail-content');
+  let activeSightingId = null;
+  let activeMarkerEl = null;
+
+  function openDetailPanel(sightingData) {
+    activeSightingId = sightingData.id;
+
+    // Show skeleton immediately
+    detailContent.innerHTML = `
+      <div class="detail-image-wrap">
+        <div class="detail-image-placeholder">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ddd" stroke-width="1.5">
+            <rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/>
+            <polyline points="21 15 16 10 5 21"/>
+          </svg>
+        </div>
+      </div>
+      <div class="detail-skeleton">
+        <div class="skel-line" style="width:65%;height:20px;margin-bottom:0.5rem"></div>
+        <div class="skel-line" style="width:40%"></div>
+        <div class="skel-line" style="width:80%;margin-top:1rem"></div>
+        <div class="skel-line" style="width:55%"></div>
+        <div class="skel-line" style="width:70%;margin-top:1rem"></div>
+      </div>`;
+
+    detailPanel.classList.remove('detail-panel--closed');
+    detailPanel.classList.add('detail-panel--open');
+    detailPanel.removeAttribute('aria-hidden');
+
+    // Fetch likes + comments in parallel
+    Promise.all([
+      fetch(`/sightings/api/like/${sightingData.id}/`).then(r => r.json()).catch(() => ({ liked: false, count: 0 })),
+      fetch(`/sightings/api/comments/${sightingData.id}/`).then(r => r.json()).catch(() => ({ results: [] })),
+    ]).then(([likeData, commentData]) => {
+      if (activeSightingId !== sightingData.id) return;
+      renderDetailPanel(sightingData, likeData, commentData.results || []);
+    });
+  }
+
+  function renderDetailPanel(s, likeData, comments) {
+    const profileUrl = buildProfileUrl(s.user);
+    const timeStr = new Date(s.timestamp).toLocaleString(undefined, {
+      month: 'short', day: 'numeric', year: 'numeric',
+      hour: '2-digit', minute: '2-digit',
+    });
+
+    const commentsHtml = comments.length === 0
+      ? '<p style="color:#bbb;font-size:0.85rem;text-align:center;padding:1rem 0">No comments yet</p>'
+      : comments.map(c => `
+          <div class="detail-comment-item">
+            <strong>${escapeHtml(c.user)}</strong> ${escapeHtml(c.text)}
+            <span class="detail-comment-time">${new Date(c.timestamp).toLocaleString()}</span>
+          </div>`).join('');
+
+    const imageHtml = s.image_url
+      ? `<img src="${escapeHtml(s.image_url)}" alt="${escapeHtml(s.common_name)}" />`
+      : `<div class="detail-image-placeholder">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ddd" stroke-width="1.5">
+            <rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/>
+            <polyline points="21 15 16 10 5 21"/>
+          </svg>
+          <span>No photo</span>
+        </div>`;
+
+    const descHtml = s.description
+      ? `<p class="detail-description">${escapeHtml(s.description)}</p>` : '';
+    const locHtml = s.location_name
+      ? `<p class="detail-location">${escapeHtml(s.location_name)}</p>` : '';
+    const countHtml = s.count > 1
+      ? `<span class="detail-badge">&times;${s.count}</span>` : '';
+    const behaviorHtml = s.behavior
+      ? `<span class="detail-badge detail-badge--green">${escapeHtml(s.behavior)}</span>` : '';
+
+    detailContent.innerHTML = `
+      <div class="detail-image-wrap">${imageHtml}</div>
+      <div class="detail-header">
+        <div class="detail-species-row">
+          <div class="detail-species">${escapeHtml(s.common_name)}</div>
+          ${countHtml}
+        </div>
+        <div class="detail-scientific">${escapeHtml(s.scientific_name || '')}</div>
+        ${behaviorHtml ? `<div style="margin-top:0.4rem">${behaviorHtml}</div>` : ''}
+        <div class="detail-meta-row">
+          <span>${timeStr}</span>
+          <span>by <a href="${profileUrl}">${escapeHtml(s.user)}</a></span>
+        </div>
+        ${descHtml}
+        ${locHtml}
+      </div>
+      <div class="detail-actions">
+        <button class="detail-action-btn ${likeData.liked ? 'liked' : ''}" id="panel-like-btn">
+          ${likeData.liked ? '♥' : '♡'}&nbsp;<span id="panel-like-count">${likeData.count}</span>
+        </button>
+        <button class="detail-action-btn" id="panel-locate-btn">Center map</button>
+      </div>
+      <div class="detail-comments">
+        <div class="detail-comments-label">Comments</div>
+        <div id="panel-comments-list" class="detail-comments-list">${commentsHtml}</div>
+        <div class="detail-comment-form">
+          <input class="detail-comment-input" id="panel-comment-input"
+                 placeholder="Add a comment…" maxlength="500" autocomplete="off">
+          <button class="detail-comment-submit" id="panel-comment-submit" title="Post comment">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="22" y1="2" x2="11" y2="13"/>
+              <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+            </svg>
+          </button>
+        </div>
+      </div>`;
+
+    // Like (POST to toggle)
+    document.getElementById('panel-like-btn').addEventListener('click', function() {
+      fetch(`/sightings/api/like/${s.id}/`, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': getCsrfToken() },
+      })
+        .then(r => r.json())
+        .then(d => {
+          this.classList.toggle('liked', d.liked);
+          this.innerHTML = `${d.liked ? '♥' : '♡'}&nbsp;<span id="panel-like-count">${d.count}</span>`;
+        });
+    });
+
+    // Fly to
+    document.getElementById('panel-locate-btn').addEventListener('click', () => {
+      map.setView([s.lat, s.lng], 16, { animate: true });
+    });
+
+    // Comment submit
+    const submitComment = () => {
+      const input = document.getElementById('panel-comment-input');
+      const text = input.value.trim();
+      if (!text) return;
+      fetch(`/sightings/api/add-comment/${s.id}/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'X-CSRFToken': getCsrfToken(),
+        },
+        body: `text=${encodeURIComponent(text)}`,
+      }).then(r => r.json()).then(c => {
+        input.value = '';
+        const list = document.getElementById('panel-comments-list');
+        const emptyMsg = list.querySelector('p');
+        if (emptyMsg) emptyMsg.remove();
+        const item = document.createElement('div');
+        item.className = 'detail-comment-item';
+        item.innerHTML = `<strong>${escapeHtml(c.user)}</strong> ${escapeHtml(c.text)}<span class="detail-comment-time">just now</span>`;
+        list.prepend(item);
+      });
+    };
+
+    document.getElementById('panel-comment-submit').addEventListener('click', submitComment);
+    document.getElementById('panel-comment-input').addEventListener('keydown', e => {
+      if (e.key === 'Enter') submitComment();
+    });
+  }
+
+  function closeDetailPanel() {
+    detailPanel.classList.add('detail-panel--closed');
+    detailPanel.classList.remove('detail-panel--open');
+    detailPanel.setAttribute('aria-hidden', 'true');
+    activeSightingId = null;
+    if (activeMarkerEl) {
+      activeMarkerEl.classList.remove('bird-marker--active');
+      activeMarkerEl = null;
+    }
+  }
+
+  document.getElementById('detail-close').addEventListener('click', closeDetailPanel);
+
+  // ── Render sightings ──────────────────────────────────────────────────────
   function clearMarkers() { markerGroup.clearLayers(); }
 
   function renderSightings(items) {
     clearMarkers();
+
+    // Update count + empty state
+    if (items.length === 0) {
+      document.getElementById('result-count').textContent = 'No sightings found';
+      showEmpty();
+    } else {
+      document.getElementById('result-count').textContent =
+        items.length === 1 ? '1 sighting' : `${items.length} sightings`;
+      hideEmpty();
+    }
+
     items.forEach(s => {
-      const m = L.marker([s.lat, s.lng]);
-      const safeName = escapeHtml(s.common_name);
-      const safeUser = escapeHtml(s.user);
-      const profileUrl = buildProfileUrl(s.user);
-      m.bindPopup(`<strong>${safeName}</strong><br/><small>${new Date(s.timestamp).toLocaleString()}</small><br/><small>Observed by: <a href="${profileUrl}">${safeUser}</a></small>`);
-      // Hover shows popup only when not locked
-      m.on('mouseover', function() { if (!lockedMarker) this.openPopup(); });
-      m.on('mouseout', function() { if (!lockedMarker) this.closePopup(); });
-      // Click locks the marker (focuses and keeps popup open) until the map is clicked
-      m.on('click', function(e) {
-        if (lockedMarker && lockedMarker === this) {
-          // clicking same marker toggles the lock off
-          unlockMarker();
-        } else {
-          if (lockedMarker) unlockMarker();
-          lockMarker(this);
-        }
+      if (!s.lat || !s.lng) return;
+      const m = L.marker([s.lat, s.lng], { icon: birdIcon });
+      m.bindTooltip(`<strong>${escapeHtml(s.common_name)}</strong>`, {
+        direction: 'top',
+        offset: [0, -12],
+        className: 'bird-tooltip',
       });
+
+      m.on('click', function(e) {
+        L.DomEvent.stopPropagation(e);
+        // Highlight active marker
+        if (activeMarkerEl) activeMarkerEl.classList.remove('bird-marker--active');
+        const el = this.getElement();
+        const markerDiv = el ? el.querySelector('.bird-marker') : null;
+        if (markerDiv) {
+          markerDiv.classList.add('bird-marker--active');
+          activeMarkerEl = markerDiv;
+        }
+        openDetailPanel(s);
+        map.panTo([s.lat, s.lng], { animate: true });
+      });
+
       markerGroup.addLayer(m);
     });
+
     if (items.length > 0) {
-      const latLngs = items.map(i => [i.lat, i.lng]);
-      map.fitBounds(latLngs, { maxZoom: 15, padding: [40,40] });
+      const latLngs = items.filter(i => i.lat && i.lng).map(i => [i.lat, i.lng]);
+      if (latLngs.length > 0) {
+        map.fitBounds(latLngs, { maxZoom: 15, padding: [40, 40] });
+      }
     }
   }
 
+  // ── Search ────────────────────────────────────────────────────────────────
   async function searchSightings() {
+    showLoading();
     const q = document.getElementById('search_input').value.trim();
-    let url = '{% url "sightings:search_sightings" %}';
+    const cat = document.getElementById('category_filter').value;
     const params = new URLSearchParams();
     if (q) params.set('q', q);
-    const res = await fetch(url + '?' + params.toString());
-    const data = await res.json();
-    renderSightings(data.results || []);
+    if (cat) params.set('category', cat);
+    try {
+      const res = await fetch('{% url "sightings:search_sightings" %}?' + params.toString());
+      const data = await res.json();
+      renderSightings(data.results || []);
+    } catch (err) {
+      console.error('Search failed:', err);
+    } finally {
+      hideLoading();
+    }
   }
 
-  document.getElementById('search_btn').addEventListener('click', searchSightings);
-  document.getElementById('recent_btn').addEventListener('click', searchSightings);
+  function clearSearch() {
+    document.getElementById('search_input').value = '';
+    document.getElementById('category_filter').value = '';
+    searchSightings();
+  }
 
-  // no species list to populate
-    // initial load: fetch recent sightings so markers appear immediately
-    document.addEventListener('DOMContentLoaded', function() {
-      searchSightings();
+  // Search events
+  document.getElementById('search_btn').addEventListener('click', searchSightings);
+  document.getElementById('recent_btn').addEventListener('click', clearSearch);
+  document.getElementById('search_input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') searchSightings();
+  });
+
+  // Live search with debounce
+  let searchDebounce;
+  document.getElementById('search_input').addEventListener('input', () => {
+    clearTimeout(searchDebounce);
+    searchDebounce = setTimeout(searchSightings, 300);
+  });
+
+  // Category filter
+  fetch('{% url "sightings:bird_categories" %}')
+    .then(r => r.json())
+    .then(data => {
+      const sel = document.getElementById('category_filter');
+      data.categories.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c.value;
+        opt.textContent = c.label;
+        sel.appendChild(opt);
+      });
     });
+
+  document.getElementById('category_filter').addEventListener('change', searchSightings);
+
+  // ── Map click → add sighting popup ───────────────────────────────────────
+  map.on('click', function(e) {
+    closeDetailPanel();
+    const addUrl = "{% url 'sightings:sighting_form' %}" + `?lat=${e.latlng.lat}&lng=${e.latlng.lng}`;
+    L.popup({ className: 'discover-map-popup', maxWidth: 220 })
+      .setLatLng(e.latlng)
+      .setContent(`
+        <div class="map-popup-add">
+          <p>Spotted something here?</p>
+          <a href="${addUrl}" class="map-popup-add-btn">Add Sighting</a>
+        </div>`)
+      .openOn(map);
+  });
+
+  // ── FAB → log sighting ────────────────────────────────────────────────────
+  document.getElementById('fab-add').addEventListener('click', () => {
+    const base = "{% url 'sightings:sighting_form' %}";
+    if (!navigator.geolocation) {
+      window.location.href = base;
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        window.location.href = `${base}?lat=${pos.coords.latitude}&lng=${pos.coords.longitude}`;
+      },
+      () => { window.location.href = base; },
+      { timeout: 4000, maximumAge: 60000 }
+    );
+  });
+
+  // ── Geolocation button ────────────────────────────────────────────────────
+  document.getElementById('geolocate-btn').addEventListener('click', function() {
+    if (!navigator.geolocation) return;
+    this.classList.add('locating');
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        this.classList.remove('locating');
+        map.setView([pos.coords.latitude, pos.coords.longitude], 14, { animate: true });
+        L.circle([pos.coords.latitude, pos.coords.longitude], {
+          radius: pos.coords.accuracy,
+          color: '#00a2ff',
+          fillOpacity: 0.08,
+          weight: 1,
+        }).addTo(map);
+      },
+      () => { this.classList.remove('locating'); },
+      { timeout: 8000 }
+    );
+  });
+
+  // ── Initial load ──────────────────────────────────────────────────────────
+  document.addEventListener('DOMContentLoaded', function() {
+    searchSightings();
+  });
 </script>
 {% endblock %}

@@ -1,5 +1,5 @@
 from django import forms
-from .models import Sighting, BirdSpecies
+from .models import Sighting, BirdSpecies, BEHAVIOR_CHOICES
 
 class SightingForm(forms.ModelForm):
     bird_species = forms.CharField(
@@ -10,16 +10,18 @@ class SightingForm(forms.ModelForm):
             'placeholder': 'Search bird species...'
         })
     )
-    
+
     class Meta:
         model = Sighting
-        fields = ['bird_species', 'latitude', 'longitude', 'weather_conditions', 'description', 'image']
+        fields = ['bird_species', 'latitude', 'longitude', 'weather_conditions', 'description', 'image', 'count', 'behavior']
         widgets = {
             'latitude': forms.NumberInput(attrs={'type': 'hidden'}),
             'longitude': forms.NumberInput(attrs={'type': 'hidden'}),
             'weather_conditions': forms.TextInput(attrs={'placeholder': 'e.g., Sunny, Cloudy, Rainy'}),
-            'description': forms.Textarea(attrs={'rows': 3}),
+            'description': forms.Textarea(attrs={'rows': 4, 'placeholder': "Share what you observed — behavior, surroundings, anything that stood out..."}),
             'image': forms.ClearableFileInput(attrs={'accept': 'image/*'}),
+            'count': forms.NumberInput(attrs={'min': '1', 'max': '9999', 'placeholder': '1'}),
+            'behavior': forms.Select(choices=[('', 'Select behavior…')] + list(BEHAVIOR_CHOICES)),
         }
     
     def clean_bird_species(self):

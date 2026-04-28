@@ -15,22 +15,11 @@
 
 {% if user.is_authenticated %}
 
-<section class="feed-hero">
-  <div class="feed-hero-inner">
-    <div>
-      <span class="feed-hero-badge">🐦 Welcome back</span>
-      <h1 class="feed-hero-title">{{ user.username }}'s Feed</h1>
-      <p class="feed-hero-subtitle">Explore recent sightings from the community or log your own discovery.</p>
-    </div>
-    <a href="{% url 'add_sighting' %}" class="feed-hero-btn">Add Sighting →</a>
-  </div>
-</section>
-
 <section class="feed-section">
   <div class="feed-container">
-    <div class="feed-section-header">
-      <span class="feed-tag">Live Activity</span>
-      <h2>Recent Bird Sightings</h2>
+    <div class="feed-page-bar">
+      <h1 class="feed-page-title">Feed</h1>
+      <a href="{% url 'add_sighting' %}" class="feed-post-btn">New sighting</a>
     </div>
 
     {% if sightings %}
@@ -79,7 +68,6 @@
             </button>
             <button class="feed-action-btn comment-btn" data-id="{{ sighting.id }}">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
-              <span>Comment</span>
             </button>
             {% if sighting.user == user %}
             <form method="post" action="{% url 'sightings:delete_sighting' sighting.id %}" onsubmit="return confirm('Delete this sighting?');" class="feed-delete-form">
@@ -93,8 +81,16 @@
 
           <!-- Species info -->
           <div class="feed-card-species">
-            <h3>{{ sighting.bird_species.common_name }}</h3>
+            <div class="feed-card-species-row">
+              <h3>{{ sighting.bird_species.common_name }}</h3>
+              {% if sighting.count > 1 %}
+              <span class="feed-card-count">&times;{{ sighting.count }}</span>
+              {% endif %}
+            </div>
             <span class="feed-card-scientific">{{ sighting.bird_species.scientific_name }}</span>
+            {% if sighting.behavior %}
+            <span class="feed-card-behavior">{{ sighting.get_behavior_display }}</span>
+            {% endif %}
           </div>
 
           <!-- Location -->
@@ -107,10 +103,12 @@
 
           <!-- Details -->
           <div class="feed-card-details">
+            {% if sighting.weather_conditions %}
             <div class="feed-card-detail">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 15h4l3 6 4-12 3 6h4"/></svg>
               <span>{{ sighting.weather_conditions }}</span>
             </div>
+            {% endif %}
             {% if sighting.description %}
             <p class="feed-card-notes">{{ sighting.description }}</p>
             {% endif %}
@@ -131,10 +129,9 @@
       {% endfor %}
     {% else %}
       <div class="feed-empty">
-        <div class="feed-empty-icon">🦅</div>
-        <h3>No sightings yet</h3>
-        <p>Be the first to log a bird sighting and share it with the community.</p>
-        <a href="{% url 'add_sighting' %}" class="feed-hero-btn">Add Your First Sighting →</a>
+        <h3>Nothing here yet</h3>
+        <p>Log a sighting to get the feed started.</p>
+        <a href="{% url 'add_sighting' %}" class="feed-post-btn">Log a sighting</a>
       </div>
     {% endif %}
   </div>
