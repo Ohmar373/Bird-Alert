@@ -512,7 +512,12 @@
             (data.results || []).forEach(c => {
               const div = document.createElement('div');
               div.className = 'feed-comment-item';
-              div.innerHTML = `<strong>${c.user}</strong> ${c.text} <span class="feed-comment-time">${new Date(c.timestamp).toLocaleString()}</span>`;
+              const strong = document.createElement('strong');
+              strong.textContent = c.user;
+              const timeSpan = document.createElement('span');
+              timeSpan.className = 'feed-comment-time';
+              timeSpan.textContent = new Date(c.timestamp).toLocaleString();
+              div.append(strong, ' ', c.text, ' ', timeSpan);
               list.appendChild(div);
             });
           });
@@ -544,7 +549,12 @@
         const list = document.getElementById('comments-list-' + id);
         const div = document.createElement('div');
         div.className = 'feed-comment-item';
-        div.innerHTML = `<strong>${data.user}</strong> ${data.text} <span class="feed-comment-time">${new Date(data.timestamp).toLocaleString()}</span>`;
+        const strong = document.createElement('strong');
+        strong.textContent = data.user;
+        const timeSpan = document.createElement('span');
+        timeSpan.className = 'feed-comment-time';
+        timeSpan.textContent = new Date(data.timestamp).toLocaleString();
+        div.append(strong, ' ', data.text, ' ', timeSpan);
         list.insertBefore(div, list.firstChild);
         input.value = '';
       }).catch(() => {});

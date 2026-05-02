@@ -93,7 +93,7 @@
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 <script>
   // ── Map init ──────────────────────────────────────────────────────────────
-  const map = L.map('map', { zoomControl: false }).setView([26.3017, -98.1633], 13);
+  const map = L.map('map', { zoomControl: false }).setView([25.9017, -97.4977], 15);
   L.control.zoom({ position: 'bottomleft' }).addTo(map);
 
   // CARTO Voyager — clean, colourful, great for birding maps
@@ -102,7 +102,6 @@
     subdomains: 'abcd',
     maxZoom: 20,
   }).addTo(map);
-
   const profileUrlTemplate = "{% url 'profile:user' '__USERNAME__' %}";
 
   // ── Marker cluster group ──────────────────────────────────────────────────
