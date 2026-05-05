@@ -6,3 +6,4 @@ requests==2.31.0
 Pillow
 google-cloud-vision==3.7.4
 google-genai
+gunicorn
