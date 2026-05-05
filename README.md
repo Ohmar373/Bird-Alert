@@ -129,7 +129,10 @@ Add the following to your `.env` file:
 ```
 DEBUG=True
 SECRET_KEY=your-secret-key-here
+GEMINI_API_KEY=your-gemini-api-key-here
 ```
+
+You can also copy `.env.example` to `.env` and replace the placeholder values. The Gemini key is used by the server for bird detection, so every developer running the project locally needs a valid key in their own `.env` file. Do not commit real API keys.
 
 ### Step 5: Run Database Migrations
 
@@ -265,6 +268,7 @@ Bird-Alert/
 
 - **Never commit `.env` file** - It's already in `.gitignore`
 - **Keep `SECRET_KEY` private** - Generate a new one for production
+- **Keep `GEMINI_API_KEY` private** - Add it in Render environment variables for the deployed app, or share it privately with trusted teammates for local development
 - **Debug mode:** Only enable `DEBUG=True` during development
 - For production, update `ALLOWED_HOSTS` in `settings.py`
 

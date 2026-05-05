@@ -1,3 +1,7 @@
+from functools import lru_cache
+from urllib.parse import quote
+
+import requests
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -191,6 +195,39 @@ def camera_detection(request):
     return render(request, "sightings/camera_detection.html")
 
 
+@lru_cache(maxsize=256)
+def get_bird_example_image(common_name, scientific_name=""):
+    """Return a representative bird image from Wikipedia, if one exists."""
+    candidates = [common_name, scientific_name]
+
+    for name in candidates:
+        if not name:
+            continue
+
+        try:
+            url = f"https://en.wikipedia.org/api/rest_v1/page/summary/{quote(name)}"
+            response = requests.get(
+                url,
+                headers={"User-Agent": "BirdAlert/1.0"},
+                timeout=3,
+            )
+            if response.status_code != 200:
+                continue
+
+            data = response.json()
+            original_image = data.get("originalimage") or {}
+            thumbnail = data.get("thumbnail") or {}
+            image_url = original_image.get("source") or thumbnail.get("source")
+            if image_url:
+                return image_url
+        except requests.RequestException:
+            continue
+        except ValueError:
+            continue
+
+    return ""
+
+
 @login_required
 @require_POST
 def detect_bird_species(request):
@@ -230,6 +267,13 @@ def detect_bird_species(request):
         
         # Identify bird species from image
         species_list = identify_bird_species(image_file)
+        if species_list:
+            species_list = species_list[:1]
+            for species in species_list:
+                species["example_image_url"] = get_bird_example_image(
+                    species.get("common_name", ""),
+                    species.get("scientific_name", ""),
+                )
         
         return JsonResponse({
             'success': True,
