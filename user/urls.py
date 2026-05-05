@@ -10,7 +10,7 @@ urlpatterns = [
     path('', views.index, name='index'),
     path('login/', views.Login, name='login'),
      path('forgot-username/', views.forgot_username, name='forgot_username'),
-    path('logout/', auth_views.LogoutView.as_view(template_name='user/index.html'), name='logout'),
+    path('logout/', auth_views.LogoutView.as_view(next_page='index'), name='logout'),
     path('register/', views.register, name='register'),
     path('add-sighting/', sightings_views.discover, name='add_sighting'),
     path('sightings/', views.sightings, name='sightings'),
