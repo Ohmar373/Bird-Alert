@@ -17,5 +17,6 @@ urlpatterns = [
     path("api/like/<int:sighting_id>/", views.like_sighting, name="like_sighting"),
     path("api/comments/<int:sighting_id>/", views.get_comments, name="get_comments"),
     path("api/add-comment/<int:sighting_id>/", views.add_comment, name="add_comment"),
+    path("api/report/<int:sighting_id>/", views.report_sighting, name="report_sighting"),
     path("api/detect-bird/", views.detect_bird_species, name="detect_bird_species"),
 ]

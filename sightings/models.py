@@ -23,6 +23,10 @@ class BirdSpecies(models.Model):
     common_name = models.CharField(max_length=100, unique= True)
     scientific_name = models.CharField(max_length=150, unique= True)
     category = models.CharField(max_length=20, choices=BIRD_CATEGORY_CHOICES, default='other', db_index=True)
+
+    class Meta:
+        verbose_name = "Bird species"
+        verbose_name_plural = "Bird species"
     
     def __str__(self):
         return self.common_name
@@ -64,4 +68,23 @@ class Comment(models.Model):
     timestamp = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Comment by {self.user.username} on {self.sighting.id}" 
+        return f"Comment by {self.user.username} on {self.sighting.id}"
+
+
+class SightingReport(models.Model):
+    REPORT_REASONS = [
+        ('wrong_species', 'Incorrect Species'),
+        ('fake', 'Fake Sighting/Spam'),
+        ('inappropriate', 'Inappropriate Image/Content'),
+        ('other', 'Other'),
+    ]
+
+    sighting = models.ForeignKey(Sighting, on_delete=models.CASCADE, related_name='reports')
+    reporting_user = models.ForeignKey('auth.User', on_delete=models.CASCADE)
+    reason = models.CharField(max_length=20, choices=REPORT_REASONS)
+    description = models.TextField(blank=True, help_text="Provide additional details or the correct species name.")
+    timestamp = models.DateTimeField(auto_now_add=True)
+    resolved = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"Report on {self.sighting.id} by {self.reporting_user.username}" 
