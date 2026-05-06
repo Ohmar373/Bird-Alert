@@ -1,108 +1,664 @@
 {% extends "base.html" %}
 
-{% block title %}Post Sighting - Bird Alert{% endblock %}
+{% block title %}Log Sighting - Bird Alert{% endblock %}
 
 {% block content %}
-<div style="max-width: 500px; margin: 0 auto;">
-    <div class="card">
-        <h3 style="margin-bottom: 1rem;">Log Sighting</h3>
-        
-        {% if lat and lng %}
-        <p style="font-size: 0.9rem; color: #666; margin-bottom: 1.5rem;">📍 {{ lat | floatformat:4 }}, {{ lng | floatformat:4 }}</p>
-        {% endif %}
+<div class="sf-page">
 
-        <form method="post" enctype="multipart/form-data" style="display: flex; flex-direction: column; gap: 1rem;">
-            {% csrf_token %}
-            
-            {% if form.errors %}
-            <div style="background:#fdecea; border:1px solid #ef9a9a; border-radius:6px; padding:0.75rem 1rem; color:#b71c1c; font-size:0.9rem;">
-                <strong>Please fix the following:</strong>
-                <ul style="margin:0.4rem 0 0 1.2rem; padding:0;">
-                    {% for field in form %}{% for error in field.errors %}<li>{{ field.label }}: {{ error }}</li>{% endfor %}{% endfor %}
-                    {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
-                </ul>
-            </div>
-            {% endif %}
-            
-            <div class="form-group">
-                <label for="bird_category" class="form-label">Category</label>
-                <select id="bird_category" style="width: 100%; padding: 0.5rem; border: 1px solid #e0ddd7; border-radius: 4px; font-size: 0.95rem; background: white;">
-                    <option value="">All Categories</option>
-                </select>
-            </div>
+  <div class="sf-header">
+    <h2 class="sf-title">Log a Sighting</h2>
+    {% if lat and lng %}
+    <p class="sf-subtitle">Location pinned from map &mdash; {{ lat|floatformat:4 }}, {{ lng|floatformat:4 }}</p>
+    {% endif %}
+  </div>
 
-            <div class="form-group" style="position: relative;">
-                <label for="{{ form.bird_species.id_for_label }}" class="form-label">Bird *</label>
-                <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
-                    {{ form.bird_species }}
-                    <a href="{% url 'sightings:camera_detection' %}" id="cameraBtn" class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.95rem; text-decoration: none; display: inline-block; white-space: nowrap;">🎥 Camera</a>
-                </div>
-                <div id="bird_suggestions" style="position: absolute; top: 120px; left: 0; right: 0; background: white; border: 1px solid #e0ddd7; border-top: none; max-height: 200px; overflow-y: auto; display: none; z-index: 10;"></div>
-                {% if form.bird_species.errors %}<div class="text-danger">{{ form.bird_species.errors }}</div>{% endif %}
-            </div>
+  <form method="post" enctype="multipart/form-data" class="sf-form">
+    {% csrf_token %}
 
-            <div class="form-group">
-                <label for="{{ form.weather_conditions.id_for_label }}" class="form-label">Weather</label>
-                {{ form.weather_conditions }}
-                {% if form.weather_conditions.errors %}<div class="text-danger">{{ form.weather_conditions.errors }}</div>{% endif %}
-            </div>
-
-            <div class="form-group">
-                <label for="{{ form.description.id_for_label }}" class="form-label">Notes</label>
-                {{ form.description }}
-                {% if form.description.errors %}<div class="text-danger">{{ form.description.errors }}</div>{% endif %}
-            </div>
-
-            <div class="form-group">
-                <label for="{{ form.image.id_for_label }}" class="form-label">Photo (optional)</label>
-                {{ form.image }}
-                {% if form.image.errors %}<div class="text-danger">{{ form.image.errors }}</div>{% endif %}
-                <p style="font-size: 0.8rem; color: #999; margin-top: 0.4rem;">Upload a photo of your bird sighting</p>
-            </div>
-
-            {{ form.latitude }}
-            {{ form.longitude }}
-
-            <div id="location_status" style="font-size:0.85rem; color:#555; display:flex; align-items:center; flex-wrap:wrap; gap:0.4rem;">
-                <span id="location_icon">📍</span>
-                <span id="location_text">No location set</span>
-                <button type="button" id="use_gps_btn" style="margin-left:0.5rem; font-size:0.8rem; padding:0.2rem 0.6rem; border:1px solid #aaa; border-radius:4px; background:white; cursor:pointer;">📡 Use my current location</button>
-            </div>
-
-            <div style="display: flex; gap: 0.75rem; margin-top: 1.5rem;">
-                <button type="submit" class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.95rem;">Submit</button>
-                <a href="{% url 'sightings:discover' %}" class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.95rem;">Cancel</a>
-            </div>
-        </form>
+    {% if form.errors %}
+    <div class="sf-error-banner">
+      <strong>Please fix the following:</strong>
+      <ul>
+        {% for field in form %}{% for error in field.errors %}<li>{{ field.label }}: {{ error }}</li>{% endfor %}{% endfor %}
+        {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
+      </ul>
     </div>
+    {% endif %}
+
+    <div id="sf-detected-banner" style="display:none" class="sf-detected-banner"></div>
+
+    <div class="sf-grid">
+
+      <!-- LEFT: Bird identification -->
+      <div class="sf-section">
+        <div class="sf-section-label">Bird</div>
+
+        <div class="sf-field">
+          <label for="bird_category" class="sf-label">Category</label>
+          <select id="bird_category" class="sf-select">
+            <option value="">All categories</option>
+          </select>
+        </div>
+
+        <div class="sf-field sf-species-field">
+          <label for="{{ form.bird_species.id_for_label }}" class="sf-label">
+            Species <span class="sf-required">*</span>
+          </label>
+          <div class="sf-species-row">
+            {{ form.bird_species }}
+            <a href="{% url 'sightings:camera_detection' %}" id="cameraBtn" class="sf-camera-btn">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                   stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                <circle cx="12" cy="13" r="4"/>
+              </svg>
+              Camera
+            </a>
+          </div>
+          <div id="bird_suggestions" class="sf-suggestions"></div>
+          {% if form.bird_species.errors %}
+          <div class="sf-field-error">{{ form.bird_species.errors }}</div>
+          {% endif %}
+        </div>
+
+        <!-- Hint: Not sure? Upload to detect -->
+        <div class="sf-hint">
+          <button type="button" class="sf-hint-toggle" id="hint-toggle">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+              <line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+            Not sure what bird you spotted?
+            <svg class="sf-hint-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+
+          <div class="sf-hint-body" id="hint-body">
+            <p class="sf-hint-wip">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                   stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+              </svg>
+              AI identification — work in progress. Results may not always be accurate.
+            </p>
+
+            <label class="sf-detect-upload" id="detect-upload-label">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                   stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="16 16 12 12 8 16"/>
+                <line x1="12" y1="12" x2="12" y2="21"/>
+                <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/>
+              </svg>
+              <span id="detect-upload-text">Upload a photo to identify</span>
+              <input type="file" id="detect-image-input" accept="image/*">
+            </label>
+
+            <div id="detect-loading" class="sf-detect-loading" style="display:none">
+              <div class="sf-detect-spinner"></div>
+              <span>Identifying species…</span>
+            </div>
+
+            <div id="detect-results" class="sf-detect-results" style="display:none"></div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- RIGHT: Sighting details -->
+      <div class="sf-section">
+        <div class="sf-section-label">Details</div>
+
+        <!-- Location -->
+        <div class="sf-field">
+          <label class="sf-label">Location</label>
+          <div class="sf-location-box">
+            <span id="location_text" class="sf-location-text">No location set</span>
+            <button type="button" id="use_gps_btn" class="sf-gps-btn">Use GPS</button>
+          </div>
+          {{ form.latitude }}
+          {{ form.longitude }}
+          <span id="location_icon" style="display:none"></span>
+        </div>
+
+        <!-- Count + Behavior on one row -->
+        <div class="sf-row-2">
+          <div class="sf-field">
+            <label for="{{ form.count.id_for_label }}" class="sf-label">Count</label>
+            {{ form.count }}
+            {% if form.count.errors %}<div class="sf-field-error">{{ form.count.errors }}</div>{% endif %}
+          </div>
+          <div class="sf-field">
+            <label for="{{ form.behavior.id_for_label }}" class="sf-label">Behavior</label>
+            {{ form.behavior }}
+            {% if form.behavior.errors %}<div class="sf-field-error">{{ form.behavior.errors }}</div>{% endif %}
+          </div>
+        </div>
+
+        <!-- Weather -->
+        <div class="sf-field">
+          <label for="{{ form.weather_conditions.id_for_label }}" class="sf-label">Weather</label>
+          {{ form.weather_conditions }}
+          {% if form.weather_conditions.errors %}
+          <div class="sf-field-error">{{ form.weather_conditions.errors }}</div>
+          {% endif %}
+        </div>
+
+        <!-- Description -->
+        <div class="sf-field">
+          <label for="{{ form.description.id_for_label }}" class="sf-label">Description</label>
+          {{ form.description }}
+          {% if form.description.errors %}
+          <div class="sf-field-error">{{ form.description.errors }}</div>
+          {% endif %}
+        </div>
+
+        <!-- Photo -->
+        <div class="sf-field">
+          <label for="{{ form.image.id_for_label }}" class="sf-label">
+            Photo <span class="sf-optional">optional</span>
+          </label>
+          {{ form.image }}
+          {% if form.image.errors %}<div class="sf-field-error">{{ form.image.errors }}</div>{% endif %}
+        </div>
+
+      </div>
+    </div>
+
+    <div class="sf-actions">
+      <a href="{% url 'sightings:discover' %}" class="sf-btn-cancel">Cancel</a>
+      <button type="submit" class="btn btn-primary sf-btn-submit">Post Sighting</button>
+    </div>
+
+  </form>
 </div>
 
 <style>
-    #bird_suggestions .suggestion-item {
-        padding: 0.75rem;
-        border-bottom: 1px solid #f0f0f0;
-        cursor: pointer;
-        transition: background-color 0.2s;
-    }
-    
-    #bird_suggestions .suggestion-item:hover {
-        background-color: #f5f5f5;
-    }
-    
-    #bird_suggestions .suggestion-item .common-name {
-        font-weight: 500;
-        color: #333;
-    }
-    
-    #bird_suggestions .suggestion-item .scientific-name {
-        font-size: 0.85rem;
-        color: #999;
-        font-style: italic;
-    }
+.sf-page {
+  max-width: 860px;
+  margin: 2rem auto;
+  padding: 0 1.5rem 3rem;
+}
+
+.sf-header { margin-bottom: 1.5rem; }
+
+.sf-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0 0 0.25rem;
+}
+
+.sf-subtitle {
+  font-size: 0.85rem;
+  color: #888;
+  margin: 0;
+}
+
+.sf-error-banner {
+  background: #fdecea;
+  border: 1px solid #f5c2c2;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  color: #b71c1c;
+  font-size: 0.88rem;
+  margin-bottom: 1.25rem;
+}
+
+.sf-error-banner ul { margin: 0.35rem 0 0 1.1rem; padding: 0; }
+
+.sf-detected-banner {
+  background: #ecf9f2;
+  border: 1px solid #b2dfcb;
+  border-radius: 8px;
+  padding: 0.65rem 1rem;
+  color: #1b5e3b;
+  font-size: 0.88rem;
+  margin-bottom: 1.25rem;
+}
+
+.sf-form { display: flex; flex-direction: column; }
+
+.sf-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.sf-section {
+  background: white;
+  border: 1px solid #e8e5e0;
+  border-radius: 12px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+
+.sf-section-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: #aaa;
+}
+
+.sf-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  position: relative;
+}
+
+/* Two side-by-side fields */
+.sf-row-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.sf-label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #444;
+}
+
+.sf-required { color: #e53e3e; font-size: 0.8rem; }
+.sf-optional { font-weight: 400; color: #bbb; font-size: 0.78rem; margin-left: 0.3rem; }
+
+/* All inputs */
+.sf-select,
+#id_weather_conditions,
+#id_description,
+#id_count,
+#id_behavior,
+#bird_species_input {
+  width: 100%;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid #e0ddd7;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-family: inherit;
+  color: #333;
+  background: #faf8f3;
+  box-sizing: border-box;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.sf-select:focus,
+#id_weather_conditions:focus,
+#id_description:focus,
+#id_count:focus,
+#id_behavior:focus,
+#bird_species_input:focus {
+  outline: none;
+  border-color: #00a2ff;
+  box-shadow: 0 0 0 3px rgba(0, 162, 255, 0.1);
+  background: white;
+}
+
+#id_description { resize: vertical; min-height: 90px; }
+#id_count { max-width: 100%; }
+
+/* Species row */
+.sf-species-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+}
+
+.sf-species-row input { flex: 1; min-width: 0; }
+
+.sf-camera-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #e0ddd7;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-family: inherit;
+  background: white;
+  color: #555;
+  text-decoration: none;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.sf-camera-btn:hover { border-color: #00a2ff; color: #00a2ff; }
+
+/* Suggestions */
+.sf-suggestions {
+  position: absolute;
+  top: calc(100% + 2px);
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #e0ddd7;
+  border-radius: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+  display: none;
+  z-index: 100;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+}
+
+.sf-suggestions .suggestion-item {
+  padding: 0.65rem 0.75rem;
+  border-bottom: 1px solid #f5f3ee;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.sf-suggestions .suggestion-item:last-child { border-bottom: none; }
+.sf-suggestions .suggestion-item:hover { background: #f5f3ee; }
+.sf-suggestions .common-name { font-weight: 500; font-size: 0.88rem; color: #333; }
+.sf-suggestions .scientific-name { font-size: 0.78rem; color: #aaa; font-style: italic; margin-top: 0.1rem; }
+
+/* ── Hint / detection section ── */
+.sf-hint {
+  border: 1px solid #e8e5e0;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.sf-hint-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.7rem 0.9rem;
+  background: #faf8f3;
+  border: none;
+  font-size: 0.85rem;
+  font-family: inherit;
+  color: #555;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s;
+}
+
+.sf-hint-toggle:hover { background: #f2efe9; color: #333; }
+
+.sf-hint-chevron {
+  margin-left: auto;
+  transition: transform 0.2s;
+  flex-shrink: 0;
+}
+
+.sf-hint.open .sf-hint-chevron { transform: rotate(180deg); }
+
+.sf-hint-body {
+  display: none;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0.9rem;
+  border-top: 1px solid #e8e5e0;
+}
+
+.sf-hint.open .sf-hint-body { display: flex; }
+
+.sf-hint-wip {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4rem;
+  font-size: 0.78rem;
+  color: #b45309;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 6px;
+  padding: 0.5rem 0.65rem;
+  margin: 0;
+  line-height: 1.45;
+}
+
+.sf-hint-wip svg { flex-shrink: 0; margin-top: 1px; }
+
+/* Upload area */
+.sf-detect-upload {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem;
+  border: 1.5px dashed #d0cdc8;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: #888;
+  transition: border-color 0.2s, background 0.2s;
+  text-align: center;
+}
+
+.sf-detect-upload:hover {
+  border-color: #00a2ff;
+  background: #f5fbff;
+  color: #555;
+}
+
+.sf-detect-upload input { display: none; }
+
+/* Detection loading */
+.sf-detect-loading {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.85rem;
+  color: #888;
+  padding: 0.5rem 0;
+}
+
+.sf-detect-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid #e0ddd7;
+  border-top-color: #00a2ff;
+  border-radius: 50%;
+  animation: sf-spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes sf-spin { to { transform: rotate(360deg); } }
+
+/* Detection results */
+.sf-detect-results {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.sf-detect-result-item {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid #e8e5e0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  background: white;
+}
+
+.sf-detect-result-item:hover {
+  border-color: #52b788;
+  background: #f0faf4;
+}
+
+.sf-detect-result-name { flex: 1; }
+.sf-detect-result-name strong { font-size: 0.88rem; color: #1a1a1a; display: block; }
+.sf-detect-result-name em { font-size: 0.75rem; color: #aaa; font-style: italic; }
+
+.sf-detect-conf {
+  font-size: 0.75rem;
+  color: #888;
+  white-space: nowrap;
+}
+
+.sf-detect-conf-bar {
+  width: 40px;
+  height: 4px;
+  background: #e8e5e0;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.sf-detect-conf-fill {
+  height: 100%;
+  background: #52b788;
+  border-radius: 2px;
+}
+
+/* Location */
+.sf-location-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  border: 1px solid #e0ddd7;
+  border-radius: 8px;
+  padding: 0.5rem 0.65rem;
+  background: #faf8f3;
+}
+
+.sf-location-text { color: #999; flex: 1; font-size: 0.85rem; line-height: 1.3; }
+.sf-location-text.is-set { color: #2d6a4f; }
+.sf-location-text.is-warn { color: #b45309; }
+
+.sf-gps-btn {
+  font-size: 0.78rem;
+  padding: 0.25rem 0.6rem;
+  border: 1px solid #e0ddd7;
+  border-radius: 6px;
+  background: white;
+  cursor: pointer;
+  color: #555;
+  white-space: nowrap;
+  font-family: inherit;
+  flex-shrink: 0;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.sf-gps-btn:hover { border-color: #00a2ff; color: #00a2ff; }
+.sf-gps-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+#id_image { font-size: 0.85rem; color: #555; }
+
+.sf-field-error { font-size: 0.82rem; color: #c0392b; margin-top: 0.2rem; }
+
+/* Actions */
+.sf-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+}
+
+.sf-btn-cancel {
+  font-size: 0.9rem;
+  color: #888;
+  text-decoration: none;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  transition: color 0.2s, background 0.2s;
+}
+
+.sf-btn-cancel:hover { color: #333; background: #f0ede8; }
+.sf-btn-submit { padding: 0.55rem 1.5rem; font-size: 0.9rem; }
+
+@media (max-width: 640px) {
+  .sf-grid { grid-template-columns: 1fr; }
+  .sf-actions { justify-content: stretch; flex-direction: column-reverse; }
+  .sf-btn-submit, .sf-btn-cancel { width: 100%; text-align: center; }
+}
 </style>
 
 <script>
-    // Handle detected bird from camera
+    // ── Bird detection (hint section) ────────────────────────────────────────
+    const hintToggle = document.getElementById('hint-toggle');
+    const hintSection = hintToggle.closest('.sf-hint');
+    const detectInput = document.getElementById('detect-image-input');
+    const detectLoading = document.getElementById('detect-loading');
+    const detectResults = document.getElementById('detect-results');
+    const detectUploadText = document.getElementById('detect-upload-text');
+
+    hintToggle.addEventListener('click', () => {
+        hintSection.classList.toggle('open');
+    });
+
+    detectInput.addEventListener('change', function() {
+        if (!this.files || !this.files[0]) return;
+        detectUploadText.textContent = this.files[0].name;
+        detectLoading.style.display = 'flex';
+        detectResults.style.display = 'none';
+        detectResults.innerHTML = '';
+
+        const formData = new FormData();
+        formData.append('image', this.files[0]);
+        fetch('/sightings/api/detect-bird/', {
+            method: 'POST',
+            headers: { 'X-CSRFToken': getCsrfToken() },
+            body: formData,
+        })
+        .then(r => r.json())
+        .then(data => {
+            detectLoading.style.display = 'none';
+            if (!data.success || !data.species || data.species.length === 0) {
+                detectResults.innerHTML = '<p style="font-size:0.83rem;color:#aaa;padding:0.25rem 0">No species identified. Try a clearer photo.</p>';
+                detectResults.style.display = 'block';
+                return;
+            }
+            data.species.slice(0, 5).forEach(sp => {
+                const pct = Math.round((sp.confidence || 0) * 100);
+                const item = document.createElement('div');
+                item.className = 'sf-detect-result-item';
+                item.innerHTML = `
+                    <div class="sf-detect-result-name">
+                        <strong>${escapeText(sp.common_name)}</strong>
+                        <em>${escapeText(sp.scientific_name || '')}</em>
+                    </div>
+                    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px">
+                        <span class="sf-detect-conf">${pct}%</span>
+                        <div class="sf-detect-conf-bar">
+                            <div class="sf-detect-conf-fill" style="width:${pct}%"></div>
+                        </div>
+                    </div>`;
+                item.addEventListener('click', () => {
+                    birdInput.value = sp.common_name;
+                    if (sp.category) pendingCategory = sp.category;
+                    hintSection.classList.remove('open');
+                    birdInput.focus();
+                    const banner = document.getElementById('sf-detected-banner');
+                    banner.textContent = `Selected: ${sp.common_name}${sp.scientific_name ? ' (' + sp.scientific_name + ')' : ''}`;
+                    banner.style.display = 'block';
+                });
+                detectResults.appendChild(item);
+            });
+            detectResults.style.display = 'flex';
+        })
+        .catch(() => {
+            detectLoading.style.display = 'none';
+            detectResults.innerHTML = '<p style="font-size:0.83rem;color:#aaa;padding:0.25rem 0">Detection failed. Please try again.</p>';
+            detectResults.style.display = 'block';
+        });
+    });
+
+    function escapeText(v) {
+        return String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function getCsrfToken() {
+        const m = document.cookie.match(/csrftoken=([^;]+)/);
+        return m ? m[1] : '';
+    }
+
+    // ── Detected bird from camera page ───────────────────────────────────────
     function handleDetectedBird() {
         const detectedBirdJSON = sessionStorage.getItem('detectedBird');
         if (detectedBirdJSON) {
@@ -110,33 +666,27 @@
                 const bird = JSON.parse(detectedBirdJSON);
                 birdInput.value = bird.common_name;
                 if (bird.category) pendingCategory = bird.category;
-                // Clear the sessionStorage
                 sessionStorage.removeItem('detectedBird');
-                // Show success message
-                const msg = document.createElement('div');
-                msg.style.cssText = 'background: #d4edda; color: #155724; padding: 0.75rem; border-radius: 4px; margin-bottom: 1rem;';
-                msg.textContent = `✅ Auto-detected: ${bird.common_name} (${bird.scientific_name})`;
-                document.querySelector('.card').insertBefore(msg, document.querySelector('form'));
-            } catch (e) {
-                console.error('Error parsing detected bird:', e);
-            }
+                const banner = document.getElementById('sf-detected-banner');
+                banner.textContent = `Detected: ${bird.common_name}${bird.scientific_name ? ' (' + bird.scientific_name + ')' : ''}`;
+                banner.style.display = 'block';
+            } catch (e) {}
         }
     }
 
+    // ── Bird search autocomplete ──────────────────────────────────────────────
     const birdInput = document.getElementById('bird_species_input');
     const suggestionBox = document.getElementById('bird_suggestions');
     const categorySelect = document.getElementById('bird_category');
     let debounceTimer;
     let pendingCategory = null;
 
-    // Auto-detect location and fill hidden lat/lng inputs if not already set
     const latInput = document.getElementById('{{ form.latitude.id_for_label }}');
     const lngInput = document.getElementById('{{ form.longitude.id_for_label }}');
     const locationText = document.getElementById('location_text');
-    const locationIcon = document.getElementById('location_icon');
     const useGpsBtn = document.getElementById('use_gps_btn');
 
-    // Restore location saved before going to the camera page
+    // Restore location saved before going to camera
     const savedLat = sessionStorage.getItem('sightingLat');
     const savedLng = sessionStorage.getItem('sightingLng');
     if (savedLat && savedLng && !latInput.value && !lngInput.value) {
@@ -146,7 +696,6 @@
     sessionStorage.removeItem('sightingLat');
     sessionStorage.removeItem('sightingLng');
 
-    // Save location when user clicks the Camera button
     document.getElementById('cameraBtn').addEventListener('click', () => {
         if (latInput.value && lngInput.value) {
             sessionStorage.setItem('sightingLat', latInput.value);
@@ -154,54 +703,49 @@
         }
     });
 
-    function setLocationStatus(icon, text, color) {
-        locationIcon.textContent = icon;
+    function setLocationStatus(text, state) {
         locationText.textContent = text;
-        locationText.style.color = color || '#555';
+        locationText.className = 'sf-location-text' + (state ? ' ' + state : '');
     }
 
     if (latInput && latInput.value && lngInput && lngInput.value) {
-        // Came from map click — location already set
-        setLocationStatus('📍', `Location set from map: ${parseFloat(latInput.value).toFixed(4)}, ${parseFloat(lngInput.value).toFixed(4)}`, '#2e7d32');
-        useGpsBtn.textContent = '📡 Use my current location instead';
+        setLocationStatus(`${parseFloat(latInput.value).toFixed(4)}, ${parseFloat(lngInput.value).toFixed(4)}`, 'is-set');
+        useGpsBtn.textContent = 'Update GPS';
     } else {
-        setLocationStatus('⚠️', 'No location set — pick a spot on the map or use GPS below', '#b45309');
+        setLocationStatus('No location set', 'is-warn');
     }
 
     useGpsBtn.addEventListener('click', () => {
         if (!navigator.geolocation) {
-            setLocationStatus('⚠️', 'Geolocation not supported by your browser', '#b45309');
+            setLocationStatus('Geolocation not supported', 'is-warn');
             return;
         }
         useGpsBtn.disabled = true;
         useGpsBtn.textContent = 'Detecting…';
         navigator.geolocation.getCurrentPosition(
-            (pos) => {
+            pos => {
                 latInput.value = pos.coords.latitude;
                 lngInput.value = pos.coords.longitude;
-                setLocationStatus('📍', `Current location: ${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`, '#2e7d32');
-                useGpsBtn.textContent = '📡 Update location';
+                setLocationStatus(`${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`, 'is-set');
+                useGpsBtn.textContent = 'Update GPS';
                 useGpsBtn.disabled = false;
             },
             () => {
-                setLocationStatus('⚠️', 'Could not get GPS location — please allow location access', '#b45309');
-                useGpsBtn.textContent = '📡 Try again';
+                setLocationStatus('Could not get location — allow access and try again', 'is-warn');
+                useGpsBtn.textContent = 'Try again';
                 useGpsBtn.disabled = false;
             },
             { timeout: 10000 }
         );
     });
 
-    // Handle detected bird on page load
     window.addEventListener('load', handleDetectedBird);
 
-    // Restore image captured on the camera page into the file input
+    // Restore camera image
     window.addEventListener('load', () => {
         const imageData = sessionStorage.getItem('detectedBirdImage');
         if (!imageData) return;
         sessionStorage.removeItem('detectedBirdImage');
-
-        // Convert base64 data URL → File → attach to the image input
         fetch(imageData)
             .then(r => r.blob())
             .then(blob => {
@@ -211,18 +755,16 @@
                 const dt = new DataTransfer();
                 dt.items.add(file);
                 input.files = dt.files;
-
-                // Show a small preview thumbnail next to the input
                 const preview = document.createElement('img');
                 preview.src = imageData;
-                preview.style.cssText = 'max-height:80px; border-radius:4px; margin-top:0.5rem; display:block;';
+                preview.style.cssText = 'max-height:72px; border-radius:6px; margin-top:0.5rem; display:block;';
                 input.parentNode.appendChild(preview);
             });
     });
 
-    // Load categories on page load
+    // Load categories
     fetch('/sightings/api/bird-categories/')
-        .then(response => response.json())
+        .then(r => r.json())
         .then(data => {
             data.categories.forEach(cat => {
                 const option = document.createElement('option');
@@ -236,7 +778,6 @@
             }
         });
 
-    // When category changes, clear bird input and trigger a fresh search
     categorySelect.addEventListener('change', function() {
         birdInput.value = '';
         suggestionBox.style.display = 'none';
@@ -247,45 +788,29 @@
         clearTimeout(debounceTimer);
         const query = birdInput.value.trim();
         const category = categorySelect.value;
-
-        if (query.length < 1 && !category) {
-            suggestionBox.style.display = 'none';
-            return;
-        }
-
+        if (query.length < 1 && !category) { suggestionBox.style.display = 'none'; return; }
         debounceTimer = setTimeout(() => {
             let url = `/sightings/api/search-birds/?q=${encodeURIComponent(query)}`;
-            if (category) {
-                url += `&category=${encodeURIComponent(category)}`;
-            }
-
+            if (category) url += `&category=${encodeURIComponent(category)}`;
             fetch(url)
-                .then(response => response.json())
+                .then(r => r.json())
                 .then(data => {
                     suggestionBox.innerHTML = '';
-                    
                     if (data.results.length === 0) {
-                        suggestionBox.innerHTML = '<div style="padding: 0.75rem; color: #999;">No birds found</div>';
+                        suggestionBox.innerHTML = '<div style="padding:0.65rem 0.75rem;color:#aaa;font-size:0.85rem">No birds found</div>';
                         suggestionBox.style.display = 'block';
                         return;
                     }
-
                     data.results.forEach(bird => {
                         const div = document.createElement('div');
                         div.className = 'suggestion-item';
-                        div.innerHTML = `
-                            <div class="common-name">${bird.common_name}</div>
-                            <div class="scientific-name">${bird.scientific_name}</div>
-                        `;
-                        
+                        div.innerHTML = `<div class="common-name">${bird.common_name}</div><div class="scientific-name">${bird.scientific_name}</div>`;
                         div.addEventListener('click', () => {
                             birdInput.value = bird.common_name;
                             suggestionBox.style.display = 'none';
                         });
-                        
                         suggestionBox.appendChild(div);
                     });
-                    
                     suggestionBox.style.display = 'block';
                 });
         }, 300);
@@ -293,14 +818,12 @@
 
     birdInput.addEventListener('input', fetchBirds);
 
-    // Hide suggestions when clicking outside
     document.addEventListener('click', function(e) {
         if (e.target !== birdInput && e.target !== categorySelect) {
             suggestionBox.style.display = 'none';
         }
     });
 
-    // Show suggestions again when focusing input
     birdInput.addEventListener('focus', function() {
         if (this.value.trim().length > 0 && suggestionBox.innerHTML !== '') {
             suggestionBox.style.display = 'block';

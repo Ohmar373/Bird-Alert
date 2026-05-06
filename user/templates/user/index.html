@@ -15,22 +15,11 @@
 
 {% if user.is_authenticated %}
 
-<section class="feed-hero">
-  <div class="feed-hero-inner">
-    <div>
-      <span class="feed-hero-badge">🐦 Welcome back</span>
-      <h1 class="feed-hero-title">{{ user.username }}'s Feed</h1>
-      <p class="feed-hero-subtitle">Explore recent sightings from the community or log your own discovery.</p>
-    </div>
-    <a href="{% url 'add_sighting' %}" class="feed-hero-btn">Add Sighting →</a>
-  </div>
-</section>
-
 <section class="feed-section">
   <div class="feed-container">
-    <div class="feed-section-header">
-      <span class="feed-tag">Live Activity</span>
-      <h2>Recent Bird Sightings</h2>
+    <div class="feed-page-bar">
+      <h1 class="feed-page-title">Feed</h1>
+      <a href="{% url 'add_sighting' %}" style="display:inline-block;padding:0.45rem 1rem;background:#1a1a1a;color:#fff;border-radius:7px;text-decoration:none;font-size:0.875rem;font-weight:600;">+ New Sighting</a>
     </div>
 
     {% if sightings %}
@@ -79,7 +68,6 @@
             </button>
             <button class="feed-action-btn comment-btn" data-id="{{ sighting.id }}">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
-              <span>Comment</span>
             </button>
             {% if sighting.user == user %}
             <form method="post" action="{% url 'sightings:delete_sighting' sighting.id %}" onsubmit="return confirm('Delete this sighting?');" class="feed-delete-form">
@@ -98,8 +86,16 @@
 
           <!-- Species info -->
           <div class="feed-card-species">
-            <h3>{{ sighting.bird_species.common_name }}</h3>
+            <div class="feed-card-species-row">
+              <h3>{{ sighting.bird_species.common_name }}</h3>
+              {% if sighting.count > 1 %}
+              <span class="feed-card-count">&times;{{ sighting.count }}</span>
+              {% endif %}
+            </div>
             <span class="feed-card-scientific">{{ sighting.bird_species.scientific_name }}</span>
+            {% if sighting.behavior %}
+            <span class="feed-card-behavior">{{ sighting.get_behavior_display }}</span>
+            {% endif %}
           </div>
 
           <!-- Location -->
@@ -112,10 +108,12 @@
 
           <!-- Details -->
           <div class="feed-card-details">
+            {% if sighting.weather_conditions %}
             <div class="feed-card-detail">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 15h4l3 6 4-12 3 6h4"/></svg>
               <span>{{ sighting.weather_conditions }}</span>
             </div>
+            {% endif %}
             {% if sighting.description %}
             <p class="feed-card-notes">{{ sighting.description }}</p>
             {% endif %}
@@ -136,10 +134,17 @@
       {% endfor %}
     {% else %}
       <div class="feed-empty">
-        <div class="feed-empty-icon">🦅</div>
+        <div class="feed-empty-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#40916c" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M23 7c-1.8-1.8-4.2-2.6-6.5-2.3L12 3l-4.5 1.7C5.2 4.4 2.8 5.2 1 7l4 3-2 4 4-1 1 3 4-4 4 4 1-3 4 1-2-4 4-3z"/>
+          </svg>
+        </div>
         <h3>No sightings yet</h3>
-        <p>Be the first to log a bird sighting and share it with the community.</p>
-        <a href="{% url 'add_sighting' %}" class="feed-hero-btn">Add Your First Sighting →</a>
+        <p>Log the first sighting or browse what's been spotted nearby.</p>
+        <div class="feed-empty-actions">
+          <a href="{% url 'add_sighting' %}" style="display:inline-block;padding:0.55rem 1.25rem;background:#1b4332;color:#fff;border-radius:7px;text-decoration:none;font-size:0.875rem;font-weight:600;">Log a Sighting</a>
+          <a href="{% url 'sightings:discover' %}" style="display:inline-block;padding:0.55rem 1.25rem;border:1.5px solid #d1d5db;color:#374151;border-radius:7px;text-decoration:none;font-size:0.875rem;font-weight:500;">Explore the Map</a>
+        </div>
       </div>
     {% endif %}
   </div>
@@ -388,10 +393,18 @@
     {% endfor %}
   ];
 
-  const redIcon = L.icon({
-    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
-    iconSize: [18, 34],
+  const birdIcon = L.divIcon({
+    html: `<div class="feed-bird-marker"><svg width="11" height="11" viewBox="0 0 24 24" fill="white"><path d="M23 7c-1.8-1.8-4.2-2.6-6.5-2.3L12 3l-4.5 1.7C5.2 4.4 2.8 5.2 1 7l4 3-2 4 4-1 1 3 4-4 4 4 1-3 4 1-2-4 4-3z"/></svg></div>`,
+    className: '',
+    iconSize: [26, 26],
+    iconAnchor: [13, 26],
+    popupAnchor: [0, -30],
   });
+
+  const cartoTiles = () => L.tileLayer(
+    'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+    { attribution: '&copy; OpenStreetMap contributors &copy; CARTO', subdomains: 'abcd', maxZoom: 20 }
+  );
 
   {% if user.is_authenticated %}
   // Initialize maps for cards without images (default map view)
@@ -409,11 +422,8 @@
         attributionControl: false,
       }).setView([s.lat, s.lng], 13);
 
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap contributors',
-      }).addTo(map);
-
-      L.marker([s.lat, s.lng], {icon: redIcon}).addTo(map);
+      cartoTiles().addTo(map);
+      L.marker([s.lat, s.lng], {icon: birdIcon}).addTo(map);
     }
   });
 
@@ -432,8 +442,8 @@
             zoomControl: false,
             attributionControl: false,
           }).setView([s.lat, s.lng], 14);
-          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-          L.marker([s.lat, s.lng], {icon: redIcon}).addTo(map);
+          cartoTiles().addTo(map);
+          L.marker([s.lat, s.lng], {icon: birdIcon}).addTo(map);
         }
       }
     });
@@ -462,8 +472,8 @@
           zoomControl: false,
           attributionControl: false,
         }).setView([lat, lng], 14);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-        L.marker([lat, lng], {icon: redIcon}).addTo(map);
+        cartoTiles().addTo(map);
+        L.marker([lat, lng], {icon: birdIcon}).addTo(map);
       }
     });
   });
@@ -520,7 +530,12 @@
             (data.results || []).forEach(c => {
               const div = document.createElement('div');
               div.className = 'feed-comment-item';
-              div.innerHTML = `<strong>${c.user}</strong> ${c.text} <span class="feed-comment-time">${new Date(c.timestamp).toLocaleString()}</span>`;
+              const strong = document.createElement('strong');
+              strong.textContent = c.user;
+              const timeSpan = document.createElement('span');
+              timeSpan.className = 'feed-comment-time';
+              timeSpan.textContent = new Date(c.timestamp).toLocaleString();
+              div.append(strong, ' ', c.text, ' ', timeSpan);
               list.appendChild(div);
             });
           });
@@ -552,7 +567,12 @@
         const list = document.getElementById('comments-list-' + id);
         const div = document.createElement('div');
         div.className = 'feed-comment-item';
-        div.innerHTML = `<strong>${data.user}</strong> ${data.text} <span class="feed-comment-time">${new Date(data.timestamp).toLocaleString()}</span>`;
+        const strong = document.createElement('strong');
+        strong.textContent = data.user;
+        const timeSpan = document.createElement('span');
+        timeSpan.className = 'feed-comment-time';
+        timeSpan.textContent = new Date(data.timestamp).toLocaleString();
+        div.append(strong, ' ', data.text, ' ', timeSpan);
         list.insertBefore(div, list.firstChild);
         input.value = '';
       }).catch(() => {});
@@ -568,8 +588,8 @@
         scrollWheelZoom: false,
         attributionControl: false
       }).setView([s.lat, s.lng], 11);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-      L.marker([s.lat, s.lng], {icon: redIcon}).addTo(map);
+      cartoTiles().addTo(map);
+      L.marker([s.lat, s.lng], {icon: birdIcon}).addTo(map);
     }
   });
 

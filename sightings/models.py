@@ -2,6 +2,17 @@ from django.db import models
 
 # Create your models here
 
+BEHAVIOR_CHOICES = [
+    ('perched', 'Perched'),
+    ('feeding', 'Feeding'),
+    ('flying', 'In Flight'),
+    ('singing', 'Singing'),
+    ('nesting', 'Nesting'),
+    ('swimming', 'Swimming'),
+    ('bathing', 'Bathing'),
+    ('other', 'Other'),
+]
+
 BIRD_CATEGORY_CHOICES = [
     ('songbird', 'Songbirds'),
     ('waterfowl', 'Waterfowl'),
@@ -43,8 +54,10 @@ class Sighting(models.Model):
     description = models.TextField(blank=True)
     image = models.ImageField(upload_to='sighting_images/', blank=True, null=True)
     
-    location_name = models.CharField(max_length = 200, blank = True, null = True)
-    
+    location_name = models.CharField(max_length=200, blank=True, null=True)
+    count = models.PositiveIntegerField(default=1, help_text="Number of birds observed")
+    behavior = models.CharField(max_length=20, choices=BEHAVIOR_CHOICES, blank=True, default='')
+
     def __str__(self):
         return f"{self.bird_species.common_name} sighted by {self.user.username} on {self.timestamp.strftime('%Y-%m-%d %H:%M:%S')}"
 
