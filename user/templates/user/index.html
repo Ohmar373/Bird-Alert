@@ -84,10 +84,15 @@
             {% if sighting.user == user %}
             <form method="post" action="{% url 'sightings:delete_sighting' sighting.id %}" onsubmit="return confirm('Delete this sighting?');" class="feed-delete-form">
               {% csrf_token %}
-              <button type="submit" class="feed-action-btn feed-delete-btn">
+              <button type="submit" class="feed-action-btn feed-delete-btn" title="Delete">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
               </button>
             </form>
+            {% else %}
+            <button class="feed-action-btn report-btn" data-id="{{ sighting.id }}" title="Report or Suggest Correction">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+              <span>Report</span>
+            </button>
             {% endif %}
           </div>
 
@@ -581,5 +586,97 @@
   updateHeader();
   window.addEventListener('scroll', updateHeader, { passive: true });
   {% endif %}
+
+  {% if user.is_authenticated %}
+  let currentReportSightingId = null;
+
+  function updateReportDescriptionPlaceholder() {
+    const reasonEl = document.getElementById('reportReason');
+    const descEl = document.getElementById('reportDescription');
+    if (!reasonEl || !descEl) return;
+
+    if (reasonEl.value === 'wrong_species') {
+      descEl.placeholder = "If it's the wrong species, what is the right one?";
+    } else {
+      descEl.removeAttribute('placeholder');
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.report-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        currentReportSightingId = this.dataset.id;
+        document.getElementById('reportReason').value = 'wrong_species';
+        document.getElementById('reportDescription').value = '';
+        updateReportDescriptionPlaceholder();
+        document.getElementById('reportModal').style.display = 'block';
+      });
+    });
+
+    const reportReasonSelect = document.getElementById('reportReason');
+    if (reportReasonSelect) {
+      reportReasonSelect.addEventListener('change', updateReportDescriptionPlaceholder);
+    }
+
+    updateReportDescriptionPlaceholder();
+  });
+
+  function closeReportModal() {
+    document.getElementById('reportModal').style.display = 'none';
+    currentReportSightingId = null;
+    document.getElementById('reportReason').value = 'wrong_species';
+    document.getElementById('reportDescription').value = '';
+  }
+
+  async function submitReport() {
+    if (!currentReportSightingId) return;
+    const reason = document.getElementById('reportReason').value;
+    const description = document.getElementById('reportDescription').value;
+    const csrfToken = getCookie('csrftoken');
+
+    try {
+      const res = await fetch(`/sightings/api/report/${currentReportSightingId}/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': csrfToken
+        },
+        body: JSON.stringify({ reason, description })
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert('Report submitted successfully.');
+        closeReportModal();
+      } else {
+        alert('Error submitting report: ' + data.error);
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Network error while submitting report.');
+    }
+  }
+  {% endif %}
 </script>
+
+{% if user.is_authenticated %}
+<!-- Report Sighting Modal -->
+<div id="reportModal" style="display:none; position:fixed; z-index:9999; left:0; top:0; width:100%; height:100%; overflow:auto; background-color:rgba(0,0,0,0.5);">
+  <div style="background-color:#fff; margin:10% auto; padding:24px; border:none; width:90%; max-width:400px; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.15);">
+    <h3 style="margin-top:0; font-family:'Playfair Display', serif;">Report / Suggest Correction</h3>
+    <label for="reportReason" style="display:block; margin-bottom:6px; font-weight:500;">Reason:</label>
+    <select id="reportReason" style="width:100%; margin-bottom:16px; padding:10px; border-radius:6px; border:1px solid #ddd;">
+      <option value="wrong_species">Incorrect Species</option>
+      <option value="fake">Fake Sighting / Spam</option>
+      <option value="inappropriate">Inappropriate Content</option>
+      <option value="other">Other</option>
+    </select>
+    <label id="reportDescriptionLabel" for="reportDescription" style="display:block; margin-bottom:6px; font-weight:500;">Additional Information:</label>
+    <textarea id="reportDescription" rows="4" placeholder="If it's the wrong species, what is the right one?" style="width:100%; margin-bottom:16px; padding:10px; border-radius:6px; border:1px solid #ddd; resize:vertical;"></textarea>
+    <div style="display:flex; justify-content:flex-end; gap:12px;">
+      <button onclick="closeReportModal()" style="padding:10px 16px; background:none; border:none; cursor:pointer; font-weight:500;">Cancel</button>
+      <button onclick="submitReport()" style="padding:10px 16px; background-color:#e74c3c; color:#fff; border:none; border-radius:6px; cursor:pointer; font-weight:600;">Submit Report</button>
+    </div>
+  </div>
+</div>
+{% endif %}
 {% endblock %}

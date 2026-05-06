@@ -11,8 +11,9 @@ from sightings import utils
 from sightings.bird_detection import identify_bird_species
 
 from .forms import SightingForm
-from .models import BIRD_CATEGORY_CHOICES, BirdSpecies, Comment, Like, Sighting
+from .models import BIRD_CATEGORY_CHOICES, BirdSpecies, Comment, Like, Sighting, SightingReport
 
+import json
 
 @login_required
 def discover(request):
@@ -299,3 +300,26 @@ def delete_sighting(request, sighting_id):
         return redirect("index")
 
     return redirect("index")
+
+@login_required
+@require_POST
+def report_sighting(request, sighting_id):
+    sighting = get_object_or_404(Sighting, id=sighting_id)
+    try:
+        data = json.loads(request.body)
+        reason = data.get('reason')
+        description = data.get('description', '')
+        
+        if not reason:
+            return JsonResponse({'success': False, 'error': 'Reason is required'}, status=400)
+            
+        SightingReport.objects.create(
+            sighting=sighting,
+            reporting_user=request.user,
+            reason=reason,
+            description=description
+        )
+        return JsonResponse({'success': True})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=400)
+
