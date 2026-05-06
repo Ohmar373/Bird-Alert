@@ -21,7 +21,7 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 # 3. Convert the DEBUG string from .env to a real Boolean
 DEBUG = os.getenv('DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',')
+ALLOWED_HOSTS = []
 
 # Application definition
 INSTALLED_APPS = [
