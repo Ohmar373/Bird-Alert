@@ -107,6 +107,7 @@ def search_sightings(request):
     """Return sightings matching a query or species id."""
     q = request.GET.get("q", "").strip()
     species_id = request.GET.get("species_id")
+    category = request.GET.get("category", "").strip()
 
     sightings_qs = Sighting.objects.select_related("bird_species", "user").all()
 
@@ -120,14 +121,23 @@ def search_sightings(request):
     else:
         sightings_qs = sightings_qs.order_by("-timestamp")[:200]
 
+    if category:
+        sightings_qs = sightings_qs.filter(bird_species__category=category)
+
     data = [
         {
             "id": s.id,
             "lat": s.latitude,
             "lng": s.longitude,
             "common_name": s.bird_species.common_name,
+            "scientific_name": s.bird_species.scientific_name,
             "timestamp": s.timestamp.isoformat(),
             "user": s.user.username,
+            "description": s.description or "",
+            "location_name": s.location_name or "",
+            "image_url": s.image.url if s.image else None,
+            "count": s.count,
+            "behavior": s.get_behavior_display() if s.behavior else "",
         }
         for s in sightings_qs[:500]
     ]
@@ -136,11 +146,16 @@ def search_sightings(request):
 
 
 @login_required
-@require_POST
 def like_sighting(request, sighting_id):
     sighting = get_object_or_404(Sighting, id=sighting_id)
     user = request.user
+    count = Like.objects.filter(sighting=sighting).count()
 
+    if request.method == "GET":
+        liked = Like.objects.filter(user=user, sighting=sighting).exists()
+        return JsonResponse({"liked": liked, "count": count})
+
+    # POST → toggle like
     existing = Like.objects.filter(user=user, sighting=sighting)
     if existing.exists():
         existing.delete()
