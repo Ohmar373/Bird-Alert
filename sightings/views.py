@@ -3,15 +3,18 @@ from urllib.parse import quote
 
 import requests
 from django.contrib.auth.decorators import login_required
+from django.core.exceptions import ValidationError
+from django.db.models import Count, Exists, OuterRef, Value
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
 from sightings import utils
 from sightings.bird_detection import identify_bird_species
+from sightings.upload_validation import validate_photo_upload
 
 from .forms import SightingForm
-from .models import BIRD_CATEGORY_CHOICES, BirdSpecies, Comment, Like, Sighting, SightingReport
+from .models import BIRD_CATEGORY_CHOICES, BirdSpecies, Bookmark, Comment, Like, Sighting, SightingReport
 
 import json
 
@@ -56,6 +59,36 @@ def sighting_form(request):
             "form": form,
             "lat": lat,
             "lng": lng,
+        },
+    )
+
+
+@login_required
+def sighting_detail(request, sighting_id):
+    sighting = get_object_or_404(
+        Sighting.objects.select_related("bird_species", "user", "user__profile")
+        .annotate(
+            like_count=Count("like", distinct=True),
+            comment_count=Count("comment", distinct=True),
+        ),
+        id=sighting_id,
+    )
+    comments = (
+        Comment.objects.filter(sighting=sighting)
+        .select_related("user")
+        .order_by("-timestamp")
+    )
+    liked = Like.objects.filter(user=request.user, sighting=sighting).exists()
+    bookmarked = Bookmark.objects.filter(user=request.user, sighting=sighting).exists()
+
+    return render(
+        request,
+        "sightings/sighting-detail.html",
+        {
+            "sighting": sighting,
+            "comments": comments,
+            "liked": liked,
+            "bookmarked": bookmarked,
         },
     )
 
@@ -110,6 +143,11 @@ def search_sightings(request):
     category = request.GET.get("category", "").strip()
 
     sightings_qs = Sighting.objects.select_related("bird_species", "user").all()
+    if request.user.is_authenticated:
+        bookmark_subquery = Bookmark.objects.filter(user=request.user, sighting=OuterRef("pk"))
+        sightings_qs = sightings_qs.annotate(bookmarked=Exists(bookmark_subquery))
+    else:
+        sightings_qs = sightings_qs.annotate(bookmarked=Value(False))
 
     if species_id:
         try:
@@ -138,6 +176,8 @@ def search_sightings(request):
             "image_url": s.image.url if s.image else None,
             "count": s.count,
             "behavior": s.get_behavior_display() if s.behavior else "",
+            "weather": s.weather_conditions or "",
+            "bookmarked": s.bookmarked,
         }
         for s in sightings_qs[:500]
     ]
@@ -166,6 +206,25 @@ def like_sighting(request, sighting_id):
 
     count = Like.objects.filter(sighting=sighting).count()
     return JsonResponse({"liked": liked, "count": count})
+
+
+@login_required
+def bookmark_sighting(request, sighting_id):
+    sighting = get_object_or_404(Sighting, id=sighting_id)
+    bookmarked = Bookmark.objects.filter(user=request.user, sighting=sighting).exists()
+
+    if request.method == "GET":
+        return JsonResponse({"bookmarked": bookmarked})
+
+    existing = Bookmark.objects.filter(user=request.user, sighting=sighting)
+    if existing.exists():
+        existing.delete()
+        bookmarked = False
+    else:
+        Bookmark.objects.create(user=request.user, sighting=sighting)
+        bookmarked = True
+
+    return JsonResponse({"bookmarked": bookmarked})
 
 
 def get_comments(request, sighting_id):
@@ -280,6 +339,7 @@ def detect_bird_species(request):
     
     try:
         image_file = request.FILES['image']
+        validate_photo_upload(image_file)
         
         # Identify bird species from image
         species_list = identify_bird_species(image_file)
@@ -296,6 +356,11 @@ def detect_bird_species(request):
             'species': species_list
         })
         
+    except ValidationError as e:
+        return JsonResponse({
+            'success': False,
+            'error': e.messages[0] if hasattr(e, "messages") else str(e)
+        }, status=400)
     except Exception as e:
         return JsonResponse({
             'success': False,

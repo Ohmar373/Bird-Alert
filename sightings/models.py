@@ -74,6 +74,19 @@ class Like(models.Model):
         return f"{self.user.username} likes {self.sighting.id}"
 
 
+class Bookmark(models.Model):
+    user = models.ForeignKey('auth.User', on_delete=models.CASCADE)
+    sighting = models.ForeignKey(Sighting, on_delete=models.CASCADE)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'sighting')
+        ordering = ['-timestamp']
+
+    def __str__(self):
+        return f"{self.user.username} bookmarked {self.sighting.id}"
+
+
 class Comment(models.Model):
     user = models.ForeignKey('auth.User', on_delete=models.CASCADE)
     sighting = models.ForeignKey(Sighting, on_delete=models.CASCADE)

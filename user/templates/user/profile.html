@@ -109,7 +109,7 @@
 /* ── stat boxes ───────────────────────────────────────────────────────────── */
 .profile-stats {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
   gap: 0.7rem;
   margin-top: 1.25rem;
 }
@@ -124,10 +124,11 @@
   gap: 0.25rem;
 }
 
-.stat-box--posts   { border-left: 3px solid #52b788; }
-.stat-box--species { border-left: 3px solid #2a9d8f; }
-.stat-box--likes   { border-left: 3px solid #e9c46a; }
-.stat-box--comments{ border-left: 3px solid #457b9d; }
+.stat-box--posts    { border-left: 3px solid #52b788; }
+.stat-box--species  { border-left: 3px solid #2a9d8f; }
+.stat-box--likes    { border-left: 3px solid #e9c46a; }
+.stat-box--comments { border-left: 3px solid #457b9d; }
+.stat-box--saved    { border-left: 3px solid #7b5ea7; }
 
 .stat-icon { color: #aaa; margin-bottom: 0.1rem; }
 .stat-number { font-size: 1.4rem; font-weight: 700; color: #1a1a1a; line-height: 1; }
@@ -220,6 +221,17 @@
 
 .dex-chip:hover   { border-color: #52b788; background: #eaf5ee; color: #2d6a4f; }
 .dex-chip--active { border-color: #40916c; background: #40916c; color: #fff; }
+
+.bookmarks-section { margin-top: 1.25rem; }
+
+.empty-posts {
+  border: 2px dashed #c9d8c6;
+  background: #f7faf6;
+  border-radius: 14px;
+  padding: 2rem 1rem;
+  text-align: center;
+  color: #536055;
+}
 
 /* ── dex grid ─────────────────────────────────────────────────────────────── */
 .dex-grid {
@@ -455,6 +467,13 @@
             <span class="stat-number">{{ stats.comments_received }}</span>
             <span class="stat-label">Comments</span>
           </div>
+          {% if is_owner %}
+          <div class="stat-box stat-box--saved">
+            <svg class="stat-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+            <span class="stat-number">{{ stats.bookmark_count|default:0 }}</span>
+            <span class="stat-label">Saved</span>
+          </div>
+          {% endif %}
         </div>
       </div>
 
@@ -544,18 +563,13 @@
     {% if sightings %}
       <div class="posts-grid">
         {% for sighting in sightings|slice:":6" %}
-        <article class="post-card">
-          <div class="post-media">
-            {% if sighting.image %}
-              <img src="{{ sighting.image.url }}" alt="{{ sighting.bird_species.common_name }}">
-            {% else %}
-              <div class="post-media-placeholder">{{ sighting.bird_species.common_name }}</div>
-            {% endif %}
-          </div>
-          <div class="post-body">
-            <div class="post-top">
-              <h3>{{ sighting.bird_species.common_name }}</h3>
-              <span class="post-date">{{ sighting.timestamp|date:"M j, Y" }}</span>
+          <a class="post-card" href="{% url 'sightings:sighting_detail' sighting.id %}">
+            <div class="post-media">
+              {% if sighting.image %}
+                <img src="{{ sighting.image.url }}" alt="{{ sighting.bird_species.common_name }} sighting">
+              {% else %}
+                <div class="post-media-placeholder">{{ sighting.bird_species.common_name }}</div>
+              {% endif %}
             </div>
             <p class="post-description">
               {% if sighting.description %}{{ sighting.description|truncatechars:110 }}{% else %}No description added.{% endif %}
@@ -564,8 +578,7 @@
               <span>{% if sighting.location_name %}{{ sighting.location_name }}{% else %}Location pending{% endif %}</span>
               <span>{{ sighting.like_count }}♥ · {{ sighting.comment_count }} comments</span>
             </div>
-          </div>
-        </article>
+          </a>
         {% endfor %}
       </div>
     {% else %}
@@ -580,6 +593,50 @@
       </div>
     {% endif %}
   </div>
+
+  {% if is_owner %}
+  <div class="bookmarks-section">
+    <div class="section-header">
+      <h2>Bookmarked Sightings</h2>
+      {% if bookmarked_sightings %}<span>{{ stats.bookmark_count }} saved</span>{% endif %}
+    </div>
+
+    {% if bookmarked_sightings %}
+      <div class="posts-grid">
+        {% for sighting in bookmarked_sightings %}
+          <a class="post-card" href="{% url 'sightings:sighting_detail' sighting.id %}">
+            <div class="post-media">
+              {% if sighting.image %}
+                <img src="{{ sighting.image.url }}" alt="{{ sighting.bird_species.common_name }} sighting">
+              {% else %}
+                <div class="post-media-placeholder">{{ sighting.bird_species.common_name }}</div>
+              {% endif %}
+            </div>
+            <div class="post-body">
+              <div class="post-top">
+                <h3>{{ sighting.bird_species.common_name }}</h3>
+                <span class="post-date">{{ sighting.timestamp|date:"M j, Y" }}</span>
+              </div>
+              <p class="post-description">
+                {% if sighting.description %}{{ sighting.description|truncatechars:130 }}{% else %}No description added.{% endif %}
+              </p>
+              <div class="post-meta">
+                <span>by {{ sighting.user.username }}</span>
+                <span>{{ sighting.like_count }}♥ · {{ sighting.comment_count }} comments</span>
+              </div>
+            </div>
+          </a>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-posts">
+        <h3 style="margin:0">No saved posts yet</h3>
+        <p>Bookmark sightings from the feed to collect them here.</p>
+        <a class="btn btn-primary" href="{% url 'index' %}">Browse Feed</a>
+      </div>
+    {% endif %}
+  </div>
+  {% endif %}
 
 </div>
 {% endblock %}
@@ -627,7 +684,6 @@ const filtersEl = document.getElementById('dex-filters');
 const cards     = document.querySelectorAll('.dex-card');
 
 if (filtersEl) {
-  // Collect unique categories present in the grid
   const presentCats = [...new Set([...cards].map(c => c.dataset.category).filter(Boolean))];
   presentCats.sort((a, b) => (CAT_LABELS[a] || a).localeCompare(CAT_LABELS[b] || b));
 
@@ -657,4 +713,5 @@ if (filtersEl) {
   });
 }
 </script>
+{% endblock %}
 {% endblock %}

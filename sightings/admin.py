@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import BirdSpecies, Sighting, SightingReport
+from .models import BirdSpecies, Bookmark, Sighting, SightingReport
 
 @admin.register(BirdSpecies)
 class BirdSpeciesAdmin(admin.ModelAdmin):
@@ -38,3 +38,11 @@ class SightingReportAdmin(admin.ModelAdmin):
     @admin.display(description='Sighting')
     def sighting_summary(self, obj):
         return f"{obj.sighting.bird_species.common_name} by {obj.sighting.user.username}"
+
+
+@admin.register(Bookmark)
+class BookmarkAdmin(admin.ModelAdmin):
+    list_display = ('user', 'sighting', 'timestamp')
+    list_filter = ('timestamp',)
+    search_fields = ('user__username', 'sighting__bird_species__common_name')
+    list_select_related = ('user', 'sighting__bird_species')

@@ -10,7 +10,7 @@ from django.db.models import Count, Exists, OuterRef, Value
 from django.shortcuts import redirect, render
 from django.template.loader import get_template
 
-from sightings.models import Like, Sighting
+from sightings.models import Bookmark, Like, Sighting
 
 from .forms import ForgotUsernameForm, UserRegisterForm
 
@@ -22,9 +22,10 @@ def index(request):
 
     if request.user.is_authenticated:
         liked_subquery = Like.objects.filter(user=request.user, sighting=OuterRef("pk"))
-        qs = qs.annotate(liked=Exists(liked_subquery))
+        bookmarked_subquery = Bookmark.objects.filter(user=request.user, sighting=OuterRef("pk"))
+        qs = qs.annotate(liked=Exists(liked_subquery), bookmarked=Exists(bookmarked_subquery))
     else:
-        qs = qs.annotate(liked=Value(False))
+        qs = qs.annotate(liked=Value(False), bookmarked=Value(False))
 
     total_sightings = Sighting.objects.count()
     total_users = User.objects.count()
