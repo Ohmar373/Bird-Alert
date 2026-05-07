@@ -33,6 +33,11 @@
     gap: 0.3rem;
     width: 520px;
     max-width: calc(100vw - 2rem);
+    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1), max-width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  #discover-root.detail-panel-active #controls {
+    left: calc(380px + ((100% - 380px) / 2));
+    max-width: calc(100vw - 380px - 2rem);
   }
   .ctrl-main-row { display: flex; gap: 0.5rem; align-items: center; }
   .ctrl-search-wrap { position: relative; flex: 1; min-width: 0; }
@@ -46,6 +51,12 @@
   .ctrl-btn-secondary { padding: 0; border: none; background: transparent; font-size: 0.78rem; font-family: inherit; cursor: pointer; color: #40916c; text-decoration: underline; text-decoration-color: transparent; transition: color 0.15s, text-decoration-color 0.15s; }
   .ctrl-btn-secondary:hover { color: #2d6a4f; text-decoration-color: currentColor; }
   .ctrl-btn-icon { display: none !important; }
+  @media (max-width: 768px) {
+    #discover-root.detail-panel-active #controls {
+      left: 0.75rem;
+      max-width: none;
+    }
+  }
 </style>
 {% endblock %}
 
@@ -201,6 +212,7 @@
   }
 
   // ── Detail panel ──────────────────────────────────────────────────────────
+  const discoverRoot = document.getElementById('discover-root');
   const detailPanel = document.getElementById('detail-panel');
   const detailContent = document.getElementById('detail-content');
   let activeSightingId = null;
@@ -230,6 +242,7 @@
     detailPanel.classList.remove('detail-panel--closed');
     detailPanel.classList.add('detail-panel--open');
     detailPanel.removeAttribute('aria-hidden');
+    discoverRoot.classList.add('detail-panel-active');
 
     // Fetch likes + comments in parallel
     Promise.all([
@@ -365,6 +378,7 @@
     detailPanel.classList.add('detail-panel--closed');
     detailPanel.classList.remove('detail-panel--open');
     detailPanel.setAttribute('aria-hidden', 'true');
+    discoverRoot.classList.remove('detail-panel-active');
     activeSightingId = null;
     if (activeMarkerEl) {
       activeMarkerEl.classList.remove('bird-marker--active');
