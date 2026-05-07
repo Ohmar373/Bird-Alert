@@ -344,7 +344,7 @@ def detect_bird_species(request):
         # Identify bird species from image
         species_list = identify_bird_species(image_file)
         if species_list:
-            species_list = species_list[:1]
+            species_list = species_list[:3]
             for species in species_list:
                 species["example_image_url"] = get_bird_example_image(
                     species.get("common_name", ""),

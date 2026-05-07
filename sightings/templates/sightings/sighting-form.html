@@ -5,11 +5,27 @@
 {% block content %}
 <div class="sf-page">
 
-  <div class="sf-header">
-    <h2 class="sf-title">Log a Sighting</h2>
-    {% if lat and lng %}
-    <p class="sf-subtitle">Location pinned from map &mdash; {{ lat|floatformat:4 }}, {{ lng|floatformat:4 }}</p>
-    {% endif %}
+  <div class="sf-hero">
+    <div class="sf-hero-inner">
+      <div class="sf-hero-icon">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#40916c" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M2.5 19.5 L1.5 23 L6 20.5 C8 22 11 23 14.5 22 C18.5 20.5 22 17.5 22 14 C22 11.5 21 9.5 21 9.5 L23 10.5 L21 12.5 C21 9 19 7 16.5 6.5 C14.5 6 12 6.5 12 6.5 C9.5 7 8 9 6.5 11.5 C5 14 4 16.5 2.5 19.5 Z"/>
+          <path d="M4.5 17.5 C7 15 10.5 14 14.5 15.5"/>
+          <circle cx="17.5" cy="9" r="1" fill="#40916c" stroke="none"/>
+        </svg>
+      </div>
+      <div>
+        <h2 class="sf-title">Log a Sighting</h2>
+        {% if lat and lng %}
+        <p class="sf-subtitle">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:3px"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          Location pinned &mdash; {{ lat|floatformat:4 }}, {{ lng|floatformat:4 }}
+        </p>
+        {% else %}
+        <p class="sf-subtitle">Fill in what you observed — every detail helps the community.</p>
+        {% endif %}
+      </div>
+    </div>
   </div>
 
   <form method="post" enctype="multipart/form-data" class="sf-form">
@@ -170,13 +186,19 @@
 
         <!-- Photo -->
         <div class="sf-field">
-          <label for="{{ form.image.id_for_label }}" class="sf-label">
-            Photo <span class="sf-optional">optional</span>
-          </label>
+          <label class="sf-label">Photo <span class="sf-optional">optional</span></label>
           {{ form.image }}
-          <div id="photo-preview" class="sf-photo-preview" style="display:none">
-            <img id="photo-preview-img" alt="Selected sighting photo">
-            <button type="button" id="photo-preview-clear" class="sf-photo-clear">Remove photo</button>
+          <div class="sf-photo-dropzone" id="sf-photo-dropzone">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+              <circle cx="8.5" cy="8.5" r="1.5"/>
+              <polyline points="21 15 16 10 5 21"/>
+            </svg>
+            <span id="sf-photo-label">Drop a photo or click to browse</span>
+          </div>
+          <div class="sf-photo-preview" id="sf-photo-preview" style="display:none;">
+            <img id="sf-photo-thumb" src="" alt="Preview">
+            <button type="button" class="sf-photo-clear" id="sf-photo-clear" title="Remove photo">&times;</button>
           </div>
           <div id="photo-file-error" class="sf-field-error" style="display:none"></div>
           {% if form.image.errors %}<div class="sf-field-error">{{ form.image.errors }}</div>{% endif %}
@@ -200,19 +222,45 @@
   padding: 0 1.5rem 3rem;
 }
 
-.sf-header { margin-bottom: 1.5rem; }
+/* ── Hero strip ──────────────────────────────────────────────────────────── */
+.sf-hero {
+  background: linear-gradient(135deg, #d8f3dc 0%, #f8fdf9 60%, #fff 100%);
+  border: 1px solid #b7e4c7;
+  border-radius: 14px;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.sf-hero-inner {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.sf-hero-icon {
+  width: 52px;
+  height: 52px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(64,145,108,0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
 
 .sf-title {
-  font-size: 1.5rem;
+  font-size: 1.4rem;
   font-weight: 700;
   color: #1a1a1a;
-  margin: 0 0 0.25rem;
+  margin: 0 0 0.2rem;
 }
 
 .sf-subtitle {
-  font-size: 0.85rem;
-  color: #888;
+  font-size: 0.83rem;
+  color: #52b788;
   margin: 0;
+  font-weight: 500;
 }
 
 .sf-error-banner {
@@ -249,6 +297,7 @@
 .sf-section {
   background: white;
   border: 1px solid #e8e5e0;
+  border-top: 3px solid #52b788;
   border-radius: 12px;
   padding: 1.5rem;
   display: flex;
@@ -258,10 +307,10 @@
 
 .sf-section-label {
   font-size: 0.72rem;
-  font-weight: 600;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.07em;
-  color: #aaa;
+  letter-spacing: 0.08em;
+  color: #40916c;
 }
 
 .sf-field {
@@ -313,8 +362,8 @@
 #id_behavior:focus,
 #bird_species_input:focus {
   outline: none;
-  border-color: #00a2ff;
-  box-shadow: 0 0 0 3px rgba(0, 162, 255, 0.1);
+  border-color: #52b788;
+  box-shadow: 0 0 0 3px rgba(82, 183, 136, 0.15);
   background: white;
 }
 
@@ -347,7 +396,7 @@
   transition: border-color 0.2s, color 0.2s;
 }
 
-.sf-camera-btn:hover { border-color: #00a2ff; color: #00a2ff; }
+.sf-camera-btn:hover { border-color: #40916c; color: #40916c; }
 
 /* Suggestions */
 .sf-suggestions {
@@ -469,8 +518,8 @@
 }
 
 .sf-detect-upload:hover {
-  border-color: #00a2ff;
-  background: #f5fbff;
+  border-color: #52b788;
+  background: #f0faf4;
   color: #555;
 }
 
@@ -499,7 +548,7 @@
   width: 18px;
   height: 18px;
   border: 2px solid #e0ddd7;
-  border-top-color: #00a2ff;
+  border-top-color: #52b788;
   border-radius: 50%;
   animation: sf-spin 0.7s linear infinite;
   flex-shrink: 0;
@@ -585,10 +634,71 @@
   transition: border-color 0.2s, color 0.2s;
 }
 
-.sf-gps-btn:hover { border-color: #00a2ff; color: #00a2ff; }
+.sf-gps-btn:hover { border-color: #40916c; color: #40916c; }
 .sf-gps-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-#id_image { font-size: 0.85rem; color: #555; }
+#id_image { display: none; }
+
+/* ── Photo drop-zone ─────────────────────────────────────────────────────── */
+.sf-photo-dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1.25rem 1rem;
+  border: 2px dashed #d0cdc8;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: #999;
+  text-align: center;
+  transition: border-color 0.2s, background 0.2s, color 0.2s;
+  background: #faf8f3;
+}
+
+.sf-photo-dropzone:hover,
+.sf-photo-dropzone.drag-over {
+  border-color: #52b788;
+  background: #f0faf4;
+  color: #40916c;
+}
+
+.sf-photo-preview {
+  position: relative;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #111;
+  margin-top: 0.5rem;
+}
+
+.sf-photo-preview img {
+  display: block;
+  width: 100%;
+  max-height: 180px;
+  object-fit: cover;
+  border-radius: 10px;
+}
+
+.sf-photo-clear {
+  position: absolute;
+  top: 0.4rem;
+  right: 0.4rem;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.55);
+  color: white;
+  border: none;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+
+.sf-photo-clear:hover { background: rgba(0,0,0,0.8); }
 
 .sf-photo-preview {
   border: 1px solid #e8e5e0;
@@ -647,6 +757,13 @@
   .sf-actions { justify-content: stretch; flex-direction: column-reverse; }
   .sf-btn-submit, .sf-btn-cancel { width: 100%; text-align: center; }
 }
+
+@media (max-width: 480px) {
+  .sf-row-2 { grid-template-columns: 1fr; }
+  .sf-species-row { flex-wrap: wrap; }
+  .sf-camera-btn { width: 100%; justify-content: center; }
+  .sf-page { padding: 0 1rem 2rem; }
+}
 </style>
 
 <script>
@@ -658,10 +775,6 @@
     const detectResults = document.getElementById('detect-results');
     const detectUploadText = document.getElementById('detect-upload-text');
     const detectImagePreview = document.getElementById('detect-image-preview');
-    const photoInput = document.getElementById('{{ form.image.id_for_label }}');
-    const photoPreview = document.getElementById('photo-preview');
-    const photoPreviewImg = document.getElementById('photo-preview-img');
-    const photoPreviewClear = document.getElementById('photo-preview-clear');
     const photoFileError = document.getElementById('photo-file-error');
     const allowedPhotoTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
     let detectPreviewUrl = null;
@@ -751,30 +864,6 @@
         }
     }
 
-    if (photoInput) {
-        photoInput.addEventListener('change', function() {
-            if (!this.files || !this.files[0]) {
-                clearPhotoPreview();
-                return;
-            }
-
-            if (!validatePhotoFile(this.files[0], photoFileError)) {
-                this.value = '';
-                clearPhotoPreview();
-                return;
-            }
-
-            showPhotoPreview(this.files[0]);
-        });
-    }
-
-    if (photoPreviewClear) {
-        photoPreviewClear.addEventListener('click', () => {
-            if (photoInput) photoInput.value = '';
-            clearPhotoPreview();
-        });
-    }
-
     function validatePhotoFile(file, errorTarget) {
         if (allowedPhotoTypes.includes(file.type)) {
             if (photoFileError) photoFileError.style.display = 'none';
@@ -790,29 +879,6 @@
             detectResults.style.display = 'block';
         }
         return false;
-    }
-
-    function showPhotoPreview(fileOrUrl) {
-        if (!photoPreview || !photoPreviewImg) return;
-        if (photoPreviewUrl) URL.revokeObjectURL(photoPreviewUrl);
-
-        if (typeof fileOrUrl === 'string') {
-            photoPreviewUrl = null;
-            photoPreviewImg.src = fileOrUrl;
-        } else {
-            photoPreviewUrl = URL.createObjectURL(fileOrUrl);
-            photoPreviewImg.src = photoPreviewUrl;
-        }
-
-        photoPreview.style.display = 'block';
-    }
-
-    function clearPhotoPreview() {
-        if (photoPreviewUrl) URL.revokeObjectURL(photoPreviewUrl);
-        photoPreviewUrl = null;
-        if (photoPreviewImg) photoPreviewImg.removeAttribute('src');
-        if (photoPreview) photoPreview.style.display = 'none';
-        if (photoFileError) photoFileError.style.display = 'none';
     }
 
     function escapeText(v) {
@@ -921,7 +987,7 @@
                 const dt = new DataTransfer();
                 dt.items.add(file);
                 input.files = dt.files;
-                showPhotoPreview(imageData);
+                showPhotoPreview(file);
             });
     });
 
@@ -991,6 +1057,56 @@
         if (this.value.trim().length > 0 && suggestionBox.innerHTML !== '') {
             suggestionBox.style.display = 'block';
         }
+    });
+
+    // ── Photo drop-zone ──────────────────────────────────────────────────────
+    const photoInput    = document.getElementById('{{ form.image.id_for_label }}');
+    const photoDropzone = document.getElementById('sf-photo-dropzone');
+    const photoPreview  = document.getElementById('sf-photo-preview');
+    const photoThumb    = document.getElementById('sf-photo-thumb');
+    const photoClear    = document.getElementById('sf-photo-clear');
+    const photoLabel    = document.getElementById('sf-photo-label');
+
+    function showPhotoPreview(file) {
+        const reader = new FileReader();
+        reader.onload = e => {
+            photoThumb.src = e.target.result;
+            photoDropzone.style.display = 'none';
+            photoPreview.style.display  = 'block';
+        };
+        reader.readAsDataURL(file);
+    }
+
+    photoDropzone.addEventListener('click', () => photoInput.click());
+
+    photoInput.addEventListener('change', function() {
+        if (this.files && this.files[0]) showPhotoPreview(this.files[0]);
+    });
+
+    photoClear.addEventListener('click', () => {
+        photoInput.value = '';
+        photoThumb.src = '';
+        photoPreview.style.display  = 'none';
+        photoDropzone.style.display = 'flex';
+        photoLabel.textContent = 'Drop a photo or click to browse';
+    });
+
+    photoDropzone.addEventListener('dragover', e => { e.preventDefault(); photoDropzone.classList.add('drag-over'); });
+    photoDropzone.addEventListener('dragleave', () => photoDropzone.classList.remove('drag-over'));
+    photoDropzone.addEventListener('drop', e => {
+        e.preventDefault();
+        photoDropzone.classList.remove('drag-over');
+        const file = e.dataTransfer.files[0];
+        if (!file || !file.type.startsWith('image/')) return;
+        const dt = new DataTransfer();
+        dt.items.add(file);
+        photoInput.files = dt.files;
+        showPhotoPreview(file);
+    });
+
+    // Show preview if camera image was restored from sessionStorage
+    window.addEventListener('load', () => {
+        if (photoInput.files && photoInput.files[0]) showPhotoPreview(photoInput.files[0]);
     });
 </script>
 {% endblock %}

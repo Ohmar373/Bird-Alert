@@ -735,5 +735,15 @@ loadModel();
   flex: 1;
   min-width: 160px;
 }
+
+@media (max-width: 480px) {
+  .id-result-body { flex-wrap: wrap; gap: 0.5rem; }
+  .id-result-score { width: 100%; text-align: left; font-size: 1.1rem; margin-top: 0.1rem; }
+  .id-result-pct { font-size: 0.8rem; }
+  .id-action-row { flex-direction: column; }
+  .id-action-row .btn { width: 100%; }
+  .id-controls { flex-wrap: wrap; }
+  .id-controls .btn { flex: 1; min-width: 120px; }
+}
 </style>
 {% endblock %}
