@@ -3,7 +3,7 @@ from django.urls import reverse
 from django.contrib.auth.models import User
 from django.core.files.uploadedfile import SimpleUploadedFile
 from .forms import SightingForm
-from .models import BirdSpecies, Sighting, Like, Comment
+from .models import BirdSpecies, Bookmark, Sighting, Like, Comment
 
 class ModelUnitTests(TestCase):
     def setUp(self):
@@ -137,3 +137,39 @@ class ViewIntegrationTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()['text'], 'Awesome bird!')
         self.assertEqual(Comment.objects.count(), 1)
+
+    def test_bookmark_sighting_api(self):
+        self.client.login(username='testuser', password='password123')
+        url = reverse('sightings:bookmark_sighting', args=[self.sighting.id])
+
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json()['bookmarked'])
+        self.assertTrue(Bookmark.objects.filter(user=self.user, sighting=self.sighting).exists())
+
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(response.json()['bookmarked'])
+        self.assertFalse(Bookmark.objects.filter(user=self.user, sighting=self.sighting).exists())
+
+    def test_profile_shows_bookmarked_sightings_for_owner(self):
+        Bookmark.objects.create(user=self.user, sighting=self.sighting)
+        self.client.login(username='testuser', password='password123')
+
+        response = self.client.get(reverse('profile:view'))
+
+        self.assertContains(response, 'Bookmarked Sightings')
+        self.assertContains(response, self.sighting.bird_species.common_name)
+        self.assertContains(response, 'Saved')
+
+    def test_sighting_detail_view(self):
+        self.client.login(username='testuser', password='password123')
+        Bookmark.objects.create(user=self.user, sighting=self.sighting)
+        Like.objects.create(user=self.user, sighting=self.sighting)
+
+        response = self.client.get(reverse('sightings:sighting_detail', args=[self.sighting.id]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.sighting.bird_species.common_name)
+        self.assertContains(response, 'sd-icon-btn bookmarked')
+        self.assertContains(response, 'Back to testuser')

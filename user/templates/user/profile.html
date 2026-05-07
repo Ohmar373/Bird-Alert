@@ -78,7 +78,7 @@
   .profile-stats {
     margin-top: 1rem;
     display: grid;
-    grid-template-columns: repeat(4, minmax(120px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
     gap: 0.7rem;
   }
 
@@ -138,6 +138,14 @@
     display: flex;
     flex-direction: column;
     min-height: 320px;
+    color: inherit;
+    text-decoration: none;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .post-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 22px rgba(26, 44, 30, 0.12);
   }
 
   .post-media {
@@ -202,6 +210,10 @@
     gap: 0.75rem;
     color: #59645b;
     font-size: 0.84rem;
+  }
+
+  .bookmarks-section {
+    margin-top: 2rem;
   }
 
   .empty-posts {
@@ -281,6 +293,12 @@
           <p class="stat-number">{{ stats.comments_received }}</p>
           <p class="stat-label">Comments</p>
         </div>
+        {% if is_owner %}
+        <div class="stat-box">
+          <p class="stat-number">{{ stats.bookmark_count }}</p>
+          <p class="stat-label">Saved</p>
+        </div>
+        {% endif %}
       </div>
     </div>
 
@@ -303,7 +321,7 @@
     {% if sightings %}
       <div class="posts-grid">
         {% for sighting in sightings %}
-          <article class="post-card">
+          <a class="post-card" href="{% url 'sightings:sighting_detail' sighting.id %}">
             <div class="post-media">
               {% if sighting.image %}
                 <img src="{{ sighting.image.url }}" alt="{{ sighting.bird_species.common_name }} sighting">
@@ -331,7 +349,7 @@
                 <span>{{ sighting.like_count }} likes · {{ sighting.comment_count }} comments</span>
               </div>
             </div>
-          </article>
+          </a>
         {% endfor %}
       </div>
     {% else %}
@@ -346,5 +364,56 @@
       </div>
     {% endif %}
   </section>
+
+  {% if is_owner %}
+  <section class="bookmarks-section">
+    <div class="posts-header">
+      <h2>Bookmarked Sightings</h2>
+      <p>Saved posts</p>
+    </div>
+
+    {% if bookmarked_sightings %}
+      <div class="posts-grid">
+        {% for sighting in bookmarked_sightings %}
+          <a class="post-card" href="{% url 'sightings:sighting_detail' sighting.id %}">
+            <div class="post-media">
+              {% if sighting.image %}
+                <img src="{{ sighting.image.url }}" alt="{{ sighting.bird_species.common_name }} sighting">
+              {% else %}
+                <div class="post-media-placeholder">{{ sighting.bird_species.common_name }}</div>
+              {% endif %}
+            </div>
+
+            <div class="post-body">
+              <div class="post-top">
+                <h3>{{ sighting.bird_species.common_name }}</h3>
+                <span class="post-date">{{ sighting.timestamp|date:"M j, Y" }}</span>
+              </div>
+
+              <p class="post-description">
+                {% if sighting.description %}
+                  {{ sighting.description|truncatechars:130 }}
+                {% else %}
+                  No description added for this sighting.
+                {% endif %}
+              </p>
+
+              <div class="post-meta">
+                <span>by {{ sighting.user.username }}</span>
+                <span>{{ sighting.like_count }} likes Â· {{ sighting.comment_count }} comments</span>
+              </div>
+            </div>
+          </a>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-posts">
+        <h3 style="margin: 0;">No saved posts yet</h3>
+        <p>Bookmark sightings from the feed or map to collect them here.</p>
+        <a class="btn btn-primary" href="{% url 'index' %}">Browse Feed</a>
+      </div>
+    {% endif %}
+  </section>
+  {% endif %}
 </section>
 {% endblock %}

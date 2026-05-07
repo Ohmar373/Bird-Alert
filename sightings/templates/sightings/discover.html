@@ -127,8 +127,27 @@
       <span>Try adjusting your search or filter</span>
       <button onclick="clearSearch()" class="ctrl-btn-secondary"
               style="margin-top:0.4rem;padding:0.35rem 1rem;width:auto">Clear</button>
+  </div>
+
+  <div id="panel-report-modal" class="panel-report-modal" style="display:none">
+    <div class="panel-report-dialog">
+      <h3>Report / Suggest Correction</h3>
+      <label for="panel-report-reason">Reason:</label>
+      <select id="panel-report-reason">
+        <option value="wrong_species">Incorrect Species</option>
+        <option value="fake">Fake Sighting / Spam</option>
+        <option value="inappropriate">Inappropriate Content</option>
+        <option value="other">Other</option>
+      </select>
+      <label for="panel-report-description">Additional Information:</label>
+      <textarea id="panel-report-description" rows="4" placeholder="If it's the wrong species, what is the right one?"></textarea>
+      <div class="panel-report-actions">
+        <button type="button" id="panel-report-cancel">Cancel</button>
+        <button type="button" id="panel-report-submit">Submit Report</button>
+      </div>
     </div>
   </div>
+</div>
 
 </div>
 {% endblock %}
@@ -282,18 +301,42 @@
     const descHtml = s.description
       ? `<p class="detail-description">${escapeHtml(s.description)}</p>` : '';
     const locHtml = s.location_name
-      ? `<p class="detail-location">${escapeHtml(s.location_name)}</p>` : '';
-    const countHtml = s.count > 1
-      ? `<span class="detail-badge">&times;${s.count}</span>` : '';
+      ? `<div class="detail-info-row">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          <span>${escapeHtml(s.location_name)}</span>
+        </div>` : '';
+    const weatherHtml = s.weather
+      ? `<div class="detail-info-row">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 15h4l3 6 4-12 3 6h4"/></svg>
+          <span>${escapeHtml(s.weather)}</span>
+        </div>` : '';
     const behaviorHtml = s.behavior
       ? `<span class="detail-badge detail-badge--green">${escapeHtml(s.behavior)}</span>` : '';
 
     detailContent.innerHTML = `
       <div class="detail-image-wrap">${imageHtml}</div>
+      <div class="detail-actions">
+        <button class="detail-icon-btn ${likeData.liked ? 'liked' : ''}" id="panel-like-btn" title="Like">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="${likeData.liked ? '#e74c3c' : 'none'}" stroke="${likeData.liked ? '#e74c3c' : 'currentColor'}" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+          <span id="panel-like-count">${likeData.count}</span>
+        </button>
+        <button class="detail-icon-btn" id="panel-comment-focus-btn" title="Comment">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+        </button>
+        <button class="detail-icon-btn ${s.bookmarked ? 'bookmarked' : ''}" id="panel-bookmark-btn" title="Bookmark">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="${s.bookmarked ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>
+        </button>
+        <button class="detail-icon-btn" id="panel-locate-btn" title="Center map">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        </button>
+        <button class="detail-icon-btn detail-report-btn" id="panel-report-btn" title="Report or Suggest Correction">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+          <span>Report</span>
+        </button>
+      </div>
       <div class="detail-header">
         <div class="detail-species-row">
           <div class="detail-species">${escapeHtml(s.common_name)}</div>
-          ${countHtml}
         </div>
         <div class="detail-scientific">${escapeHtml(s.scientific_name || '')}</div>
         ${behaviorHtml ? `<div style="margin-top:0.4rem">${behaviorHtml}</div>` : ''}
@@ -303,12 +346,7 @@
         </div>
         ${descHtml}
         ${locHtml}
-      </div>
-      <div class="detail-actions">
-        <button class="detail-action-btn ${likeData.liked ? 'liked' : ''}" id="panel-like-btn">
-          ${likeData.liked ? '♥' : '♡'}&nbsp;<span id="panel-like-count">${likeData.count}</span>
-        </button>
-        <button class="detail-action-btn" id="panel-locate-btn">Center map</button>
+        ${weatherHtml}
       </div>
       <div class="detail-comments">
         <div class="detail-comments-label">Comments</div>
@@ -335,8 +373,33 @@
         .then(r => r.json())
         .then(d => {
           this.classList.toggle('liked', d.liked);
-          this.innerHTML = `${d.liked ? '♥' : '♡'}&nbsp;<span id="panel-like-count">${d.count}</span>`;
+          const icon = this.querySelector('svg');
+          icon.setAttribute('fill', d.liked ? '#e74c3c' : 'none');
+          icon.setAttribute('stroke', d.liked ? '#e74c3c' : 'currentColor');
+          document.getElementById('panel-like-count').textContent = d.count;
         });
+    });
+
+    document.getElementById('panel-bookmark-btn').addEventListener('click', function() {
+      fetch(`/sightings/api/bookmark/${s.id}/`, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': getCsrfToken() },
+      })
+        .then(r => r.json())
+        .then(d => {
+          s.bookmarked = d.bookmarked;
+          this.classList.toggle('bookmarked', d.bookmarked);
+          const icon = this.querySelector('svg');
+          icon.setAttribute('fill', d.bookmarked ? 'currentColor' : 'none');
+        });
+    });
+
+    document.getElementById('panel-comment-focus-btn').addEventListener('click', () => {
+      document.getElementById('panel-comment-input').focus();
+    });
+
+    document.getElementById('panel-report-btn').addEventListener('click', () => {
+      openPanelReportModal(s.id);
     });
 
     // Fly to
@@ -387,6 +450,52 @@
   }
 
   document.getElementById('detail-close').addEventListener('click', closeDetailPanel);
+
+  function openPanelReportModal(sightingId) {
+    const modal = document.getElementById('panel-report-modal');
+    const reason = document.getElementById('panel-report-reason');
+    const description = document.getElementById('panel-report-description');
+    modal.dataset.sightingId = sightingId;
+    reason.value = 'wrong_species';
+    description.value = '';
+    description.placeholder = "If it's the wrong species, what is the right one?";
+    modal.style.display = 'block';
+  }
+
+  function closePanelReportModal() {
+    const modal = document.getElementById('panel-report-modal');
+    modal.style.display = 'none';
+    modal.dataset.sightingId = '';
+    document.getElementById('panel-report-reason').value = 'wrong_species';
+    document.getElementById('panel-report-description').value = '';
+  }
+
+  function submitPanelReport() {
+    const modal = document.getElementById('panel-report-modal');
+    const sightingId = modal.dataset.sightingId;
+    if (!sightingId) return;
+    fetch(`/sightings/api/report/${sightingId}/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCsrfToken(),
+      },
+      body: JSON.stringify({
+        reason: document.getElementById('panel-report-reason').value,
+        description: document.getElementById('panel-report-description').value,
+      }),
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (data.success) {
+          alert('Report submitted successfully.');
+          closePanelReportModal();
+        } else {
+          alert('Error submitting report: ' + data.error);
+        }
+      })
+      .catch(() => alert('Network error while submitting report.'));
+  }
 
   // ── Render sightings ──────────────────────────────────────────────────────
   function clearMarkers() { markerGroup.clearLayers(); }
@@ -491,6 +600,16 @@
     });
 
   document.getElementById('category_filter').addEventListener('change', searchSightings);
+  document.getElementById('panel-report-cancel').addEventListener('click', closePanelReportModal);
+  document.getElementById('panel-report-submit').addEventListener('click', submitPanelReport);
+  document.getElementById('panel-report-reason').addEventListener('change', function() {
+    const description = document.getElementById('panel-report-description');
+    if (this.value === 'wrong_species') {
+      description.placeholder = "If it's the wrong species, what is the right one?";
+    } else {
+      description.removeAttribute('placeholder');
+    }
+  });
 
   // ── Map click → add sighting popup ───────────────────────────────────────
   map.on('click', function(e) {

@@ -1121,11 +1121,53 @@ body.discover-page main {
   color: #aaa;
 }
 
+.detail-info-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.35rem;
+  color: #888;
+  font-size: 0.85rem;
+}
+
+.detail-info-row svg {
+  width: 14px;
+  flex-shrink: 0;
+  color: #aaa;
+}
+
 .detail-actions {
   display: flex;
-  gap: 0.5rem;
-  padding: 0.75rem 1.25rem;
-  border-bottom: 1px solid #f0ede8;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.85rem 1.25rem 0.35rem;
+}
+
+.detail-icon-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  font: inherit;
+  cursor: pointer;
+  color: #333;
+  line-height: 1;
+  transition: all 0.15s;
+}
+
+.detail-icon-btn:hover {
+  background: #f0ede8;
+}
+
+.detail-icon-btn.bookmarked {
+  color: #2d6a4f;
+}
+
+.detail-report-btn span {
+  font-size: 0.85rem;
 }
 
 .detail-action-btn {
@@ -1149,7 +1191,8 @@ body.discover-page main {
   background: #f0faf4;
 }
 
-.detail-action-btn.liked {
+.detail-action-btn.liked,
+.detail-action-btn.bookmarked {
   background: #e8f5e9;
   border-color: #52b788;
   color: #2d6a4f;
@@ -1306,6 +1349,74 @@ body.discover-page main {
 }
 
 /* ── Loading overlay ── */
+.panel-report-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0, 0, 0, 0.5);
+  overflow: auto;
+}
+
+.panel-report-dialog {
+  background: white;
+  margin: 10% auto;
+  padding: 24px;
+  width: 90%;
+  max-width: 400px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.panel-report-dialog h3 {
+  margin-top: 0;
+  font-family: 'Playfair Display', Georgia, serif;
+}
+
+.panel-report-dialog label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 500;
+}
+
+.panel-report-dialog select,
+.panel-report-dialog textarea {
+  width: 100%;
+  margin-bottom: 16px;
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+  font: inherit;
+  box-sizing: border-box;
+}
+
+.panel-report-dialog textarea {
+  resize: vertical;
+}
+
+.panel-report-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.panel-report-actions button {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 600;
+}
+
+#panel-report-cancel {
+  background: none;
+}
+
+#panel-report-submit {
+  background: #e74c3c;
+  color: white;
+}
+
 .map-loading {
   position: absolute;
   inset: 0;
@@ -2654,6 +2765,14 @@ body.landing-page #site-header.lp-header-scrolled .logout-btn {
 
 .feed-action-btn svg {
   flex-shrink: 0;
+}
+
+.bookmark-btn.bookmarked {
+  color: #2d6a4f;
+}
+
+.bookmark-btn:hover {
+  color: #2d6a4f;
 }
 
 .feed-delete-form {
