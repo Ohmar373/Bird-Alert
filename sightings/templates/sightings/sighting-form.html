@@ -775,10 +775,6 @@
     const detectResults = document.getElementById('detect-results');
     const detectUploadText = document.getElementById('detect-upload-text');
     const detectImagePreview = document.getElementById('detect-image-preview');
-    const photoInput = document.getElementById('{{ form.image.id_for_label }}');
-    const photoPreview = document.getElementById('photo-preview');
-    const photoPreviewImg = document.getElementById('photo-preview-img');
-    const photoPreviewClear = document.getElementById('photo-preview-clear');
     const photoFileError = document.getElementById('photo-file-error');
     const allowedPhotoTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
     let detectPreviewUrl = null;
@@ -868,30 +864,6 @@
         }
     }
 
-    if (photoInput) {
-        photoInput.addEventListener('change', function() {
-            if (!this.files || !this.files[0]) {
-                clearPhotoPreview();
-                return;
-            }
-
-            if (!validatePhotoFile(this.files[0], photoFileError)) {
-                this.value = '';
-                clearPhotoPreview();
-                return;
-            }
-
-            showPhotoPreview(this.files[0]);
-        });
-    }
-
-    if (photoPreviewClear) {
-        photoPreviewClear.addEventListener('click', () => {
-            if (photoInput) photoInput.value = '';
-            clearPhotoPreview();
-        });
-    }
-
     function validatePhotoFile(file, errorTarget) {
         if (allowedPhotoTypes.includes(file.type)) {
             if (photoFileError) photoFileError.style.display = 'none';
@@ -907,29 +879,6 @@
             detectResults.style.display = 'block';
         }
         return false;
-    }
-
-    function showPhotoPreview(fileOrUrl) {
-        if (!photoPreview || !photoPreviewImg) return;
-        if (photoPreviewUrl) URL.revokeObjectURL(photoPreviewUrl);
-
-        if (typeof fileOrUrl === 'string') {
-            photoPreviewUrl = null;
-            photoPreviewImg.src = fileOrUrl;
-        } else {
-            photoPreviewUrl = URL.createObjectURL(fileOrUrl);
-            photoPreviewImg.src = photoPreviewUrl;
-        }
-
-        photoPreview.style.display = 'block';
-    }
-
-    function clearPhotoPreview() {
-        if (photoPreviewUrl) URL.revokeObjectURL(photoPreviewUrl);
-        photoPreviewUrl = null;
-        if (photoPreviewImg) photoPreviewImg.removeAttribute('src');
-        if (photoPreview) photoPreview.style.display = 'none';
-        if (photoFileError) photoFileError.style.display = 'none';
     }
 
     function escapeText(v) {

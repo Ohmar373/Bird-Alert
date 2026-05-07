@@ -41,7 +41,7 @@
   border-radius: 0 0 16px 16px;
   padding: 3.5rem 1.5rem 1.5rem;
   position: relative;
-  margin-bottom: 1.25rem;
+  margin-bottom: 0;
 }
 
 .profile-avatar {
@@ -106,43 +106,66 @@
 
 .profile-actions .btn { text-align: center; }
 
-/* ── stat boxes ───────────────────────────────────────────────────────────── */
-.profile-stats {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
-  gap: 0.7rem;
-  margin-top: 1.25rem;
-}
-
-.stat-box {
-  background: #fff;
-  border: 1px solid #e2ede0;
-  border-radius: 10px;
-  padding: 0.75rem 0.9rem;
+/* ── inline stat row ──────────────────────────────────────────────────────── */
+.profile-stat-row {
   display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
+  flex-wrap: wrap;
+  gap: 0.35rem 1rem;
+  font-size: 0.88rem;
+  color: #555;
+  margin: 0.75rem 0 0;
 }
 
-.stat-box--posts    { border-left: 3px solid #52b788; }
-.stat-box--species  { border-left: 3px solid #2a9d8f; }
-.stat-box--likes    { border-left: 3px solid #e9c46a; }
-.stat-box--comments { border-left: 3px solid #457b9d; }
-.stat-box--saved    { border-left: 3px solid #7b5ea7; }
+.profile-stat-row strong { color: #1a1a1a; font-weight: 700; }
 
-.stat-icon { color: #aaa; margin-bottom: 0.1rem; }
-.stat-number { font-size: 1.4rem; font-weight: 700; color: #1a1a1a; line-height: 1; }
-.stat-label  { font-size: 0.78rem; color: #6b7b6c; text-transform: uppercase; letter-spacing: 0.05em; }
+.profile-stat-sep { color: #ccc; }
+
+/* ── tab bar ──────────────────────────────────────────────────────────────── */
+.profile-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid #e2ede0;
+  margin-bottom: 1.25rem;
+  background: #fff;
+  border-left: 1px solid #e2ede0;
+  border-right: 1px solid #e2ede0;
+  padding: 0 1.5rem;
+}
+
+.profile-tab {
+  padding: 0.75rem 1.25rem;
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #888;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  transition: color 0.15s, border-color 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.profile-tab--active { color: #2d6a4f; border-bottom-color: #40916c; }
+.profile-tab:hover:not(.profile-tab--active) { color: #333; }
+
+.tab-count {
+  font-size: 0.78rem;
+  background: #eaf5ee;
+  color: #40916c;
+  border-radius: 20px;
+  padding: 1px 7px;
+  font-weight: 600;
+}
+
+.tab-count-total { color: #aaa; font-weight: 400; }
+
+.profile-tab-panel[hidden] { display: none; }
 
 /* ── BirddEx section ──────────────────────────────────────────────────────── */
-.dex-section {
-  background: #fff;
-  border: 1px solid #e2ede0;
-  border-radius: 16px;
-  padding: 1.5rem;
-  margin-bottom: 1.25rem;
-}
-
 .dex-header {
   display: flex;
   align-items: center;
@@ -176,11 +199,7 @@
   text-transform: uppercase;
 }
 
-.dex-count {
-  font-size: 0.88rem;
-  color: #555;
-}
-
+.dex-count { font-size: 0.88rem; color: #555; }
 .dex-count strong { color: #1b4332; }
 
 .dex-progress-wrap {
@@ -222,85 +241,85 @@
 .dex-chip:hover   { border-color: #52b788; background: #eaf5ee; color: #2d6a4f; }
 .dex-chip--active { border-color: #40916c; background: #40916c; color: #fff; }
 
-.bookmarks-section { margin-top: 1.25rem; }
-
-.empty-posts {
-  border: 2px dashed #c9d8c6;
-  background: #f7faf6;
-  border-radius: 14px;
-  padding: 2rem 1rem;
-  text-align: center;
-  color: #536055;
-}
-
 /* ── dex grid ─────────────────────────────────────────────────────────────── */
 .dex-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   gap: 0.85rem;
 }
 
 .dex-card {
   border: 1.5px solid #e2ede0;
+  border-left: 3px solid #e2ede0;
   border-radius: 12px;
   overflow: hidden;
   background: #fff;
-  transition: box-shadow 0.15s, border-color 0.15s, transform 0.15s;
+  transition: box-shadow 0.15s, transform 0.15s;
   cursor: default;
 }
 
 .dex-card:hover {
-  box-shadow: 0 4px 16px rgba(27,67,50,0.1);
-  border-color: #b7dfc9;
-  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  transform: translateY(-4px);
 }
 
 .dex-card.dex-hidden { display: none; }
 
-.dex-card-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.45rem 0.6rem 0.3rem;
-}
-
-.dex-entry-num {
-  font-size: 0.72rem;
-  font-weight: 700;
-  color: #aaa;
-  font-family: monospace;
-  letter-spacing: 0.03em;
-}
-
-.dex-type-badge {
-  font-size: 0.65rem;
-  font-weight: 700;
-  padding: 0.15rem 0.45rem;
-  border-radius: 99px;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: #fff;
-}
-
 .dex-media {
   width: 100%;
-  aspect-ratio: 1 / 1;
+  height: 160px;
   background: linear-gradient(135deg, #2d6a4f, #52b788);
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  position: relative;
 }
 
 .dex-media img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
+.dex-media-placeholder { display: flex; align-items: center; justify-content: center; }
 .dex-media-placeholder svg { opacity: 0.55; }
+
+.dex-media-overlay {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 48px;
+  background: linear-gradient(to top, rgba(0,0,0,0.55) 0%, transparent 100%);
+  pointer-events: none;
+}
+
+.dex-entry-num {
+  position: absolute;
+  bottom: 0.45rem;
+  left: 0.5rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #fff;
+  font-family: monospace;
+  letter-spacing: 0.03em;
+  z-index: 1;
+}
+
+.dex-type-badge {
+  position: absolute;
+  bottom: 0.45rem;
+  right: 0.5rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 99px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #fff;
+  z-index: 1;
+}
 
 .dex-card-body { padding: 0.6rem 0.7rem 0.75rem; }
 
 .dex-common-name {
   font-weight: 700;
-  font-size: 0.88rem;
+  font-size: 0.9rem;
   color: #1a1a1a;
   line-height: 1.2;
   margin-bottom: 0.15rem;
@@ -311,18 +330,15 @@
 
 .dex-sci-name {
   font-style: italic;
-  font-size: 0.73rem;
-  color: #888;
+  font-size: 0.75rem;
+  color: #999;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  margin-bottom: 0.4rem;
+  margin-bottom: 0.3rem;
 }
 
-.dex-meta {
-  font-size: 0.72rem;
-  color: #6b7b6c;
-}
+.dex-meta { font-size: 0.72rem; color: #aaa; }
 
 .dex-empty {
   grid-column: 1 / -1;
@@ -331,25 +347,7 @@
   color: #6b7b6c;
 }
 
-/* ── sightings section ────────────────────────────────────────────────────── */
-.sightings-section {
-  background: #fff;
-  border: 1px solid #e2ede0;
-  border-radius: 16px;
-  padding: 1.5rem;
-}
-
-.section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  margin-bottom: 1rem;
-}
-
-.section-header h2 { font-size: 1.2rem; font-weight: 700; margin: 0; }
-.section-header a  { font-size: 0.85rem; color: #52b788; text-decoration: none; }
-.section-header a:hover { text-decoration: underline; }
-
+/* ── post cards (sightings + saved) ──────────────────────────────────────── */
 .posts-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
@@ -363,6 +361,14 @@
   background: #fff;
   display: flex;
   flex-direction: column;
+  text-decoration: none;
+  color: inherit;
+  transition: box-shadow 0.15s, transform 0.15s;
+}
+
+.post-card:hover {
+  box-shadow: 0 4px 16px rgba(27,67,50,0.1);
+  transform: translateY(-2px);
 }
 
 .post-media { width: 100%; aspect-ratio: 4/3; background: #f4f8f2; }
@@ -376,7 +382,7 @@
   padding: 0.5rem; text-align: center;
 }
 
-.post-body { padding: 0.8rem; display: flex; flex-direction: column; gap: 0.4rem; }
+.post-body { padding: 0.8rem; display: flex; flex-direction: column; gap: 0.35rem; flex: 1; }
 
 .post-top { display: flex; justify-content: space-between; gap: 0.5rem; align-items: baseline; }
 .post-top h3 { margin: 0; font-size: 0.95rem; line-height: 1.2; }
@@ -384,11 +390,15 @@
 
 .post-description { margin: 0; color: #444; font-size: 0.88rem; line-height: 1.45; }
 
-.post-meta { display: flex; justify-content: space-between; font-size: 0.78rem; color: #888; }
+.post-meta { display: flex; justify-content: space-between; font-size: 0.78rem; color: #888; margin-top: auto; padding-top: 0.35rem; }
 
 .empty-posts {
-  border: 2px dashed #c9d8c6; background: #f7faf6;
-  border-radius: 12px; padding: 2rem 1rem; text-align: center; color: #536055;
+  border: 2px dashed #c9d8c6;
+  background: #f7faf6;
+  border-radius: 14px;
+  padding: 2rem 1rem;
+  text-align: center;
+  color: #536055;
 }
 .empty-posts p { margin: 0.2rem 0 1rem; }
 
@@ -400,17 +410,17 @@
   .profile-info-row { grid-template-columns: 1fr; text-align: center; }
   .profile-bio { margin: 0 auto; }
   .profile-actions { flex-direction: row; justify-content: center; min-width: 0; }
-  .profile-stats { grid-template-columns: repeat(2, 1fr); }
+  .profile-stat-row { justify-content: center; }
   .dex-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+  .profile-tabs { padding: 0 0.75rem; }
 }
 
 @media (max-width: 480px) {
   .profile-wrap { padding: 0 0.75rem 2rem; }
   .profile-actions { flex-direction: column; width: 100%; max-width: 280px; margin: 0 auto; }
   .profile-actions .btn { width: 100%; }
-  .profile-stats { grid-template-columns: repeat(2, 1fr); gap: 0.5rem; }
+  .profile-tabs { overflow-x: auto; white-space: nowrap; padding: 0 0.5rem; }
   .dex-grid { grid-template-columns: repeat(2, 1fr); gap: 0.6rem; }
-  .dex-section, .sightings-section { padding: 1rem; }
   .posts-grid { grid-template-columns: 1fr; }
   .dex-filters { gap: 0.3rem; }
 }
@@ -446,33 +456,15 @@
         <p class="profile-handle">@{{ profile_user.username }}</p>
         <p class="profile-bio">{% if profile.bio %}{{ profile.bio }}{% elif is_owner %}Add your bio from Edit Profile.{% else %}{{ profile_user.username }} has not added a bio yet.{% endif %}</p>
 
-        <div class="profile-stats">
-          <div class="stat-box stat-box--posts">
-            <svg class="stat-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-            <span class="stat-number">{{ stats.post_count }}</span>
-            <span class="stat-label">Sightings</span>
-          </div>
-          <div class="stat-box stat-box--species">
-            <svg class="stat-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 19.5 L1.5 23 L6 20.5 C8 22 11 23 14.5 22 C18.5 20.5 22 17.5 22 14 C22 11.5 21 9.5 21 9.5 L23 10.5 L21 12.5 C21 9 19 7 16.5 6.5 C14.5 6 12 6.5 12 6.5 C9.5 7 8 9 6.5 11.5 C5 14 4 16.5 2.5 19.5 Z"/></svg>
-            <span class="stat-number">{{ stats.species_count }}</span>
-            <span class="stat-label">Species</span>
-          </div>
-          <div class="stat-box stat-box--likes">
-            <svg class="stat-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-            <span class="stat-number">{{ stats.likes_received }}</span>
-            <span class="stat-label">Likes</span>
-          </div>
-          <div class="stat-box stat-box--comments">
-            <svg class="stat-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-            <span class="stat-number">{{ stats.comments_received }}</span>
-            <span class="stat-label">Comments</span>
-          </div>
-          {% if is_owner %}
-          <div class="stat-box stat-box--saved">
-            <svg class="stat-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
-            <span class="stat-number">{{ stats.bookmark_count|default:0 }}</span>
-            <span class="stat-label">Saved</span>
-          </div>
+        <div class="profile-stat-row">
+          <span><strong>{{ stats.post_count }}</strong> sightings</span>
+          <span class="profile-stat-sep">·</span>
+          <span><strong>{{ stats.species_count }}</strong> species</span>
+          <span class="profile-stat-sep">·</span>
+          <span><strong>{{ stats.likes_received }}</strong> likes</span>
+          {% if is_owner and stats.bookmark_count %}
+          <span class="profile-stat-sep">·</span>
+          <span><strong>{{ stats.bookmark_count }}</strong> saved</span>
           {% endif %}
         </div>
       </div>
@@ -488,8 +480,65 @@
     </div>
   </div>
 
-  <!-- ── BirddEx Catalog ───────────────────────────────────────────────────── -->
-  <div class="dex-section">
+  <!-- ── Tab Bar ──────────────────────────────────────────────────────────── -->
+  <div class="profile-tabs" role="tablist">
+    <button class="profile-tab profile-tab--active" data-tab="sightings" role="tab">
+      Sightings <span class="tab-count">{{ stats.post_count }}</span>
+    </button>
+    <button class="profile-tab" data-tab="birddex" role="tab">
+      BirddEx <span class="tab-count">{{ stats.species_count }}<span class="tab-count-total">/{{ total_species_count }}</span></span>
+    </button>
+    {% if is_owner %}
+    <button class="profile-tab" data-tab="saved" role="tab">
+      Saved <span class="tab-count">{{ stats.bookmark_count|default:0 }}</span>
+    </button>
+    {% endif %}
+  </div>
+
+  <!-- ── Sightings Panel ──────────────────────────────────────────────────── -->
+  <div class="profile-tab-panel" data-panel="sightings">
+    {% if sightings %}
+      <div class="posts-grid">
+        {% for sighting in sightings %}
+          <a class="post-card" href="{% url 'sightings:sighting_detail' sighting.id %}">
+            <div class="post-media">
+              {% if sighting.image %}
+                <img src="{{ sighting.image.url }}" alt="{{ sighting.bird_species.common_name }} sighting">
+              {% else %}
+                <div class="post-media-placeholder">{{ sighting.bird_species.common_name }}</div>
+              {% endif %}
+            </div>
+            <div class="post-body">
+              <div class="post-top">
+                <h3>{{ sighting.bird_species.common_name }}</h3>
+                <span class="post-date">{{ sighting.timestamp|date:"M j, Y" }}</span>
+              </div>
+              <p class="post-description">
+                {% if sighting.description %}{{ sighting.description|truncatechars:110 }}{% else %}No description added.{% endif %}
+              </p>
+              <div class="post-meta">
+                <span>{% if sighting.location_name %}{{ sighting.location_name }}{% else %}Location pending{% endif %}</span>
+                <span>{{ sighting.like_count }}♥ · {{ sighting.comment_count }}</span>
+              </div>
+            </div>
+          </a>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-posts">
+        <h3 style="margin:0">No sightings yet</h3>
+        {% if is_owner %}
+          <p>Share your first bird sighting and start your profile feed.</p>
+          <a class="btn btn-primary" href="{% url 'sightings:sighting_form' %}">Log First Sighting</a>
+        {% else %}
+          <p>{{ profile.display_name|default:profile_user.username }} has not shared any sightings yet.</p>
+        {% endif %}
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- ── BirddEx Panel ────────────────────────────────────────────────────── -->
+  <div class="profile-tab-panel" data-panel="birddex" hidden>
     <div class="dex-header">
       <div class="dex-title">
         <h2>BirddEx</h2>
@@ -509,16 +558,11 @@
     </div>
 
     {% if discovered_species %}
-      <!-- Category filter chips — populated by JS from card data-category attrs -->
       <div class="dex-filters" id="dex-filters"></div>
 
       <div class="dex-grid" id="dex-grid">
         {% for sp in discovered_species %}
         <div class="dex-card" data-category="{{ sp.bird_species__category }}">
-          <div class="dex-card-top">
-            <span class="dex-entry-num">#{{ sp.bird_species__id|stringformat:"04d" }}</span>
-            <span class="dex-type-badge dex-badge--{{ sp.bird_species__category }}">{{ sp.bird_species__category|capfirst }}</span>
-          </div>
           <div class="dex-media">
             {% if sp.image_url %}
               <img src="{{ sp.image_url }}" alt="{{ sp.bird_species__common_name }}">
@@ -531,11 +575,14 @@
                 </svg>
               </div>
             {% endif %}
+            <div class="dex-media-overlay"></div>
+            <span class="dex-entry-num">#{{ sp.bird_species__id|stringformat:"04d" }}</span>
+            <span class="dex-type-badge dex-badge--{{ sp.bird_species__category }}">{{ sp.bird_species__category|capfirst }}</span>
           </div>
           <div class="dex-card-body">
             <div class="dex-common-name" title="{{ sp.bird_species__common_name }}">{{ sp.bird_species__common_name }}</div>
             <div class="dex-sci-name" title="{{ sp.bird_species__scientific_name }}">{{ sp.bird_species__scientific_name }}</div>
-            <div class="dex-meta">{{ sp.times_spotted }}× spotted &middot; {{ sp.first_seen|date:"M Y" }}</div>
+            <div class="dex-meta">{{ sp.times_spotted }}× · {{ sp.first_seen|date:"M Y" }}</div>
           </div>
         </div>
         {% endfor %}
@@ -553,54 +600,9 @@
     {% endif %}
   </div>
 
-  <!-- ── Recent Sightings ──────────────────────────────────────────────────── -->
-  <div class="sightings-section">
-    <div class="section-header">
-      <h2>{% if is_owner %}Recent Sightings{% else %}{{ profile.display_name|default:profile_user.username }}'s Sightings{% endif %}</h2>
-      {% if sightings|length > 6 %}<span>Showing 6 of {{ sightings|length }}</span>{% endif %}
-    </div>
-
-    {% if sightings %}
-      <div class="posts-grid">
-        {% for sighting in sightings|slice:":6" %}
-          <a class="post-card" href="{% url 'sightings:sighting_detail' sighting.id %}">
-            <div class="post-media">
-              {% if sighting.image %}
-                <img src="{{ sighting.image.url }}" alt="{{ sighting.bird_species.common_name }} sighting">
-              {% else %}
-                <div class="post-media-placeholder">{{ sighting.bird_species.common_name }}</div>
-              {% endif %}
-            </div>
-            <p class="post-description">
-              {% if sighting.description %}{{ sighting.description|truncatechars:110 }}{% else %}No description added.{% endif %}
-            </p>
-            <div class="post-meta">
-              <span>{% if sighting.location_name %}{{ sighting.location_name }}{% else %}Location pending{% endif %}</span>
-              <span>{{ sighting.like_count }}♥ · {{ sighting.comment_count }} comments</span>
-            </div>
-          </a>
-        {% endfor %}
-      </div>
-    {% else %}
-      <div class="empty-posts">
-        <h3 style="margin:0">No sightings yet</h3>
-        {% if is_owner %}
-          <p>Share your first bird sighting and start your profile feed.</p>
-          <a class="btn btn-primary" href="{% url 'sightings:sighting_form' %}">Log First Sighting</a>
-        {% else %}
-          <p>{{ profile.display_name|default:profile_user.username }} has not shared any sightings yet.</p>
-        {% endif %}
-      </div>
-    {% endif %}
-  </div>
-
+  <!-- ── Saved Panel ──────────────────────────────────────────────────────── -->
   {% if is_owner %}
-  <div class="bookmarks-section">
-    <div class="section-header">
-      <h2>Bookmarked Sightings</h2>
-      {% if bookmarked_sightings %}<span>{{ stats.bookmark_count }} saved</span>{% endif %}
-    </div>
-
+  <div class="profile-tab-panel" data-panel="saved" hidden>
     {% if bookmarked_sightings %}
       <div class="posts-grid">
         {% for sighting in bookmarked_sightings %}
@@ -622,7 +624,7 @@
               </p>
               <div class="post-meta">
                 <span>by {{ sighting.user.username }}</span>
-                <span>{{ sighting.like_count }}♥ · {{ sighting.comment_count }} comments</span>
+                <span>{{ sighting.like_count }}♥ · {{ sighting.comment_count }}</span>
               </div>
             </div>
           </a>
@@ -643,7 +645,21 @@
 
 {% block extra_js %}
 <script>
-/* ── Category type badge colors ─────────────────────────────────────────── */
+/* ── Tab switching ──────────────────────────────────────────────────────── */
+const profileTabs   = document.querySelectorAll('.profile-tab');
+const profilePanels = document.querySelectorAll('.profile-tab-panel');
+
+profileTabs.forEach(tab => {
+  tab.addEventListener('click', () => {
+    profileTabs.forEach(t => t.classList.remove('profile-tab--active'));
+    profilePanels.forEach(p => { p.hidden = true; });
+    tab.classList.add('profile-tab--active');
+    const target = document.querySelector(`.profile-tab-panel[data-panel="${tab.dataset.tab}"]`);
+    if (target) target.hidden = false;
+  });
+});
+
+/* ── Category type badge colors + card border ───────────────────────────── */
 const TYPE_COLORS = {
   songbird:    '#52b788',
   raptor:      '#e76f51',
@@ -663,12 +679,16 @@ const TYPE_COLORS = {
 
 const LIGHT_TEXT = new Set(['gamebird', 'parrot']);
 
-document.querySelectorAll('.dex-type-badge').forEach(badge => {
+document.querySelectorAll('.dex-card').forEach(card => {
+  const badge = card.querySelector('.dex-type-badge');
+  if (!badge) return;
   const cls = [...badge.classList].find(c => c.startsWith('dex-badge--'));
   if (!cls) return;
   const cat = cls.replace('dex-badge--', '');
-  badge.style.background = TYPE_COLORS[cat] || '#6c757d';
+  const color = TYPE_COLORS[cat] || '#6c757d';
+  badge.style.background = color;
   if (LIGHT_TEXT.has(cat)) badge.style.color = '#1a1a1a';
+  card.style.borderLeftColor = color;
 });
 
 /* ── Category filter chips ──────────────────────────────────────────────── */
@@ -681,10 +701,10 @@ const CAT_LABELS = {
 };
 
 const filtersEl = document.getElementById('dex-filters');
-const cards     = document.querySelectorAll('.dex-card');
+const dexCards  = document.querySelectorAll('.dex-card');
 
 if (filtersEl) {
-  const presentCats = [...new Set([...cards].map(c => c.dataset.category).filter(Boolean))];
+  const presentCats = [...new Set([...dexCards].map(c => c.dataset.category).filter(Boolean))];
   presentCats.sort((a, b) => (CAT_LABELS[a] || a).localeCompare(CAT_LABELS[b] || b));
 
   const allChip = document.createElement('button');
@@ -707,11 +727,10 @@ if (filtersEl) {
     filtersEl.querySelectorAll('.dex-chip').forEach(c => c.classList.remove('dex-chip--active'));
     chip.classList.add('dex-chip--active');
     const filter = chip.dataset.filter;
-    cards.forEach(card => {
+    dexCards.forEach(card => {
       card.classList.toggle('dex-hidden', filter !== 'all' && card.dataset.category !== filter);
     });
   });
 }
 </script>
-{% endblock %}
 {% endblock %}
