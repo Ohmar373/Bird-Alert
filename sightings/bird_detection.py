@@ -151,17 +151,26 @@ def detect_with_gemini(image_file):
         # Try models in order of capability, falling back if quota is exhausted
         last_error = None
         response = None
-        for model_name in ('gemini-2.5-flash', 'gemini-3.1-flash-lite', 'gemini-3-flash'):
+        model_candidates = [
+            ('gemini-2.5-flash', {'thinking_config': {'thinking_budget': 0}}),
+            ('gemini-2.0-flash', {}),
+            ('gemini-2.0-flash-lite', {}),
+        ]
+        for model_name, extra_config in model_candidates:
             try:
-                response = client.models.generate_content(
+                kwargs = dict(
                     model=model_name,
                     contents=[
                         genai_types.Part.from_bytes(data=image_bytes, mime_type='image/jpeg'),
                         prompt,
                     ],
                 )
+                if extra_config:
+                    kwargs['config'] = extra_config
+                response = client.models.generate_content(**kwargs)
                 break
             except Exception as model_err:
+                print(f'Gemini model {model_name} failed: {model_err}')
                 last_error = model_err
                 continue
         if response is None:

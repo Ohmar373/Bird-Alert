@@ -59,6 +59,27 @@ nav {
   align-items: center;
 }
 
+/* ── Hamburger button (hidden on desktop, shown on mobile via media query below) ── */
+@media (min-width: 641px) {
+  .nav-hamburger { display: none !important; }
+}
+
+.nav-hamburger {
+  display: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+  color: #333;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  min-width: 44px;
+  min-height: 44px;
+  transition: background 0.15s;
+}
+.nav-hamburger:hover { background: rgba(0,0,0,0.06); }
+
 .nav-links a {
   text-decoration: none;
   color: #333;
@@ -1559,6 +1580,14 @@ body.discover-page main {
     padding: 0 1rem;
   }
 
+  /* ── Touch targets ── */
+  .btn, .nav-links a, .logout-btn {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
   .welcome-section h1 {
     font-size: 1.8rem;
   }
@@ -1589,6 +1618,68 @@ body.discover-page main {
     flex-direction: column;
     gap: 1rem;
   }
+}
+
+/* ── Mobile nav collapse ──────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  header { padding: 0.75rem 0; }
+
+  .nav-hamburger { display: flex; }
+
+  .nav-links {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: #fff;
+    border-bottom: 1px solid #e0ddd7;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+    flex-direction: column;
+    gap: 0;
+    padding: 0.4rem 0 0.6rem;
+    z-index: 200;
+  }
+
+  .nav-links.nav-open { display: flex; }
+
+  .nav-links li { width: 100%; }
+
+  .nav-links a {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 0.8rem 1.5rem;
+    font-size: 1rem;
+    min-height: 48px;
+    color: #333;
+    border-radius: 0;
+  }
+
+  .nav-links a:hover { background: #f5f3ee; color: #1b4332; }
+
+  .nav-logout-item form { width: 100%; }
+
+  .nav-links .logout-btn {
+    width: 100%;
+    text-align: left;
+    padding: 0.8rem 1.5rem;
+    min-height: 48px;
+    font-size: 1rem;
+    background: none;
+    border: none;
+    color: #e63946;
+    cursor: pointer;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+  }
+
+  .nav-links .logout-btn:hover { background: #fff5f5; }
+
+  /* Landing page: hamburger is white on transparent header */
+  body.landing-page .nav-hamburger { color: #fff; }
+  body.landing-page #site-header.lp-header-scrolled .nav-hamburger { color: #333; }
 }
 
 /* ==========================================================================

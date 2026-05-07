@@ -2,10 +2,10 @@ from django.contrib.auth import get_user_model, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib import messages
-from django.db.models import Count
+from django.db.models import Count, Min
 from django.shortcuts import get_object_or_404, redirect, render
 
-from sightings.models import Comment, Like, Sighting
+from sightings.models import BirdSpecies, Comment, Like, Sighting
 
 from .forms import UserForm, ProfileForm
 from .models import Profile
@@ -31,11 +31,37 @@ def _build_profile_context(profile_user):
         "comments_received": Comment.objects.filter(sighting__user=profile_user).count(),
     }
 
+    discovered_species = list(
+        Sighting.objects.filter(user=profile_user)
+        .values(
+            'bird_species__id',
+            'bird_species__common_name',
+            'bird_species__scientific_name',
+            'bird_species__category',
+        )
+        .annotate(times_spotted=Count('id'), first_seen=Min('timestamp'))
+        .order_by('bird_species__common_name')
+    )
+
+    # Attach best photo URL directly to each species dict
+    species_images = {}
+    for s in (Sighting.objects.filter(user=profile_user, image__isnull=False)
+              .exclude(image='')
+              .select_related('bird_species').order_by('-timestamp')):
+        if s.bird_species_id not in species_images:
+            species_images[s.bird_species_id] = s.image.url
+    for sp in discovered_species:
+        sp['image_url'] = species_images.get(sp['bird_species__id'], '')
+
+    total_species_count = BirdSpecies.objects.count()
+
     return {
         "profile": profile,
         "profile_user": profile_user,
         "sightings": sightings,
         "stats": stats,
+        "discovered_species": discovered_species,
+        "total_species_count": total_species_count,
     }
 
 
