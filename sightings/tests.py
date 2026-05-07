@@ -158,7 +158,7 @@ class ViewIntegrationTests(TestCase):
 
         response = self.client.get(reverse('profile:view'))
 
-        self.assertContains(response, 'Bookmarked Sightings')
+        self.assertContains(response, 'data-panel="saved"')
         self.assertContains(response, self.sighting.bird_species.common_name)
         self.assertContains(response, 'Saved')
 

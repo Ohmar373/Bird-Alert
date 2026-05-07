@@ -25,7 +25,11 @@ class UserForm(forms.ModelForm):
 class ProfileForm(forms.ModelForm):
     class Meta:
         model = Profile
-        fields = ['display_name', 'bio', 'image']
+        fields = ['display_name', 'bio', 'image', 'banner', 'banner_position_x', 'banner_position_y']
         widgets = {
             'bio': forms.Textarea(attrs={'rows': 4, 'placeholder': 'Tell birders about yourself...'}),
+            'image': forms.ClearableFileInput(attrs={'accept': 'image/*'}),
+            'banner': forms.FileInput(attrs={'accept': 'image/*'}),
+            'banner_position_x': forms.HiddenInput(),
+            'banner_position_y': forms.HiddenInput(),
         }

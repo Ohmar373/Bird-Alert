@@ -21,7 +21,7 @@
         </div>
       </div>
 
-    <div class="sd-media">
+    <div class="sd-media{% if sighting.image %} sd-media--image{% endif %}">
       {% if sighting.image %}
         <img src="{{ sighting.image.url }}" alt="{{ sighting.bird_species.common_name }} sighting">
       {% else %}
@@ -154,16 +154,20 @@
   width: 100%;
   height: 400px;
   overflow: hidden;
-  background: #f4f8f2;
+  background: #f4f1ec;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
+.sd-media--image {
+  height: auto;
+}
+
 .sd-media img {
   width: 100%;
-  height: 100%;
-  object-fit: cover;
+  height: auto;
+  object-fit: contain;
   display: block;
 }
 

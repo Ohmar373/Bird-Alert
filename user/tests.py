@@ -2,6 +2,7 @@ from django.test import TestCase, Client
 from django.urls import reverse
 from django.contrib.auth.models import User
 from django.core import mail
+from user.profile.forms import ProfileForm
 
 class UserViewsTests(TestCase):
     def setUp(self):
@@ -77,3 +78,36 @@ class UserViewsTests(TestCase):
             self.assertEqual(response.status_code, 200)
         except Exception:
             pass # Ignore if template is missing right now.
+
+    def test_profile_form_includes_banner_upload(self):
+        form = ProfileForm()
+        self.assertIn('banner', form.fields)
+        self.assertIn('banner_position_x', form.fields)
+        self.assertIn('banner_position_y', form.fields)
+        self.assertEqual(form.fields['banner'].widget.attrs.get('accept'), 'image/*')
+        self.assertEqual(form.fields['banner'].widget.__class__.__name__, 'FileInput')
+        self.assertFalse(form.fields['banner'].required)
+        self.assertTrue(form.fields['banner_position_x'].widget.is_hidden)
+        self.assertTrue(form.fields['banner_position_y'].widget.is_hidden)
+
+    def test_profile_edit_shows_banner_position_editor(self):
+        self.client.login(username='testuser', password='password123')
+        response = self.client.get(reverse('profile:edit'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'data-banner-editor')
+        self.assertContains(response, 'data-banner-drag-hint')
+        self.assertContains(response, 'Drag to reposition')
+        self.assertContains(response, 'id_banner_position_x')
+        self.assertContains(response, 'id_banner_position_y')
+        self.assertNotContains(response, 'data-banner-axis')
+
+    def test_profile_page_renders_banner_position(self):
+        self.user.profile.banner = 'profile_banners/test.jpg'
+        self.user.profile.banner_position_x = 0
+        self.user.profile.banner_position_y = 100
+        self.user.profile.save()
+        self.client.login(username='testuser', password='password123')
+
+        response = self.client.get(reverse('profile:view'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'object-position: 0% 100%;')

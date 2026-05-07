@@ -51,6 +51,78 @@
     line-height: 1;
     white-space: nowrap;
   }
+
+  .banner-crop-editor {
+    margin: 0.5rem 0 0.75rem;
+  }
+
+  .banner-crop-frame {
+    width: 100%;
+    height: 160px;
+    border: 1px solid #dfe7dd;
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+    background: linear-gradient(135deg, #1b4332 0%, #40916c 60%, #74c69d 100%);
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+  }
+
+  .banner-crop-frame:active {
+    cursor: grabbing;
+  }
+
+  .banner-crop-frame img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    pointer-events: none;
+  }
+
+  .banner-crop-empty {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255, 255, 255, 0.86);
+    font-weight: 600;
+    letter-spacing: 0.01em;
+  }
+
+  .banner-crop-empty[hidden] {
+    display: none;
+  }
+
+  .banner-drag-hint {
+    position: absolute;
+    left: 50%;
+    bottom: 0.75rem;
+    transform: translateX(-50%);
+    padding: 0.35rem 0.7rem;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, 0.62);
+    color: #fff;
+    font-size: 0.82rem;
+    font-weight: 600;
+    pointer-events: none;
+    opacity: 1;
+    transition: opacity 0.18s ease;
+  }
+
+  .banner-drag-hint[hidden],
+  .banner-drag-hint.is-hidden {
+    display: block;
+    opacity: 0;
+  }
+
+  @media (max-width: 560px) {
+    .banner-crop-frame {
+      height: 120px;
+    }
+  }
 </style>
 {% endblock %}
 
@@ -85,6 +157,29 @@
       {% endif %}
       {{ p_form.image }}
       {{ p_form.image.errors }}
+    </div>
+
+    <div class="form-group">
+      {{ p_form.banner.label_tag }}
+      <div class="banner-crop-editor" data-banner-editor data-initial-x="{{ p_form.banner_position_x.value|default_if_none:50 }}" data-initial-y="{{ p_form.banner_position_y.value|default_if_none:50 }}">
+        <div class="banner-crop-frame" tabindex="0" aria-label="Banner preview">
+          {% if request.user.profile.banner %}
+            <img data-banner-preview src="{{ request.user.profile.banner.url }}" alt="profile banner preview" style="object-position: {{ p_form.banner_position_x.value|default_if_none:50 }}% {{ p_form.banner_position_y.value|default_if_none:50 }}%;">
+            <div class="banner-crop-empty" hidden>Select a banner to preview</div>
+            <div class="banner-drag-hint" data-banner-drag-hint>Drag to reposition</div>
+          {% else %}
+            <img data-banner-preview alt="profile banner preview" hidden>
+            <div class="banner-crop-empty">Select a banner to preview</div>
+            <div class="banner-drag-hint" data-banner-drag-hint hidden>Drag to reposition</div>
+          {% endif %}
+        </div>
+        {{ p_form.banner_position_x }}
+        {{ p_form.banner_position_y }}
+        {{ p_form.banner_position_x.errors }}
+        {{ p_form.banner_position_y.errors }}
+      </div>
+      {{ p_form.banner }}
+      {{ p_form.banner.errors }}
     </div>
 
     <button class="btn btn-primary" type="submit" name="save_profile">Save</button>
@@ -155,6 +250,136 @@
 
 {% block extra_js %}
 <script>
+  (function () {
+    const editor = document.querySelector('[data-banner-editor]');
+    if (!editor) {
+      return;
+    }
+
+    const frame = editor.querySelector('.banner-crop-frame');
+    const image = editor.querySelector('[data-banner-preview]');
+    const emptyState = editor.querySelector('.banner-crop-empty');
+    const dragHint = editor.querySelector('[data-banner-drag-hint]');
+    const fileInput = document.getElementById('id_banner');
+    const xInput = document.getElementById('id_banner_position_x');
+    const yInput = document.getElementById('id_banner_position_y');
+
+    function clamp(value) {
+      const number = Number(value);
+      if (Number.isNaN(number)) {
+        return 50;
+      }
+      return Math.max(0, Math.min(100, Math.round(number)));
+    }
+
+    const position = {
+      x: clamp(xInput ? xInput.value : editor.dataset.initialX),
+      y: clamp(yInput ? yInput.value : editor.dataset.initialY),
+    };
+
+    function applyPosition() {
+      if (image) {
+        image.style.objectPosition = `${position.x}% ${position.y}%`;
+      }
+      if (xInput) {
+        xInput.value = position.x;
+      }
+      if (yInput) {
+        yInput.value = position.y;
+      }
+    }
+
+    function showImage(src) {
+      if (!image || !src) {
+        return;
+      }
+      image.src = src;
+      image.hidden = false;
+      if (emptyState) {
+        emptyState.hidden = true;
+      }
+      if (dragHint) {
+        dragHint.hidden = false;
+        dragHint.classList.remove('is-hidden');
+      }
+      applyPosition();
+    }
+
+    function hideDragHint() {
+      if (dragHint) {
+        dragHint.classList.add('is-hidden');
+      }
+    }
+
+    if (image && image.getAttribute('src')) {
+      applyPosition();
+    }
+
+    if (fileInput) {
+      fileInput.addEventListener('change', function () {
+        const file = fileInput.files && fileInput.files[0];
+        if (!file) {
+          return;
+        }
+        if (!file.type.startsWith('image/')) {
+          fileInput.value = '';
+          return;
+        }
+
+        position.x = 50;
+        position.y = 50;
+
+        const reader = new FileReader();
+        reader.addEventListener('load', function () {
+          showImage(reader.result);
+        });
+        reader.readAsDataURL(file);
+      });
+    }
+
+    let dragState = null;
+
+    function stopDragging() {
+      dragState = null;
+    }
+
+    if (frame) {
+      frame.addEventListener('pointerdown', function (event) {
+        if (!image || image.hidden) {
+          return;
+        }
+
+        dragState = {
+          pointerId: event.pointerId,
+          startClientX: event.clientX,
+          startClientY: event.clientY,
+          startX: position.x,
+          startY: position.y,
+          width: frame.clientWidth || 1,
+          height: frame.clientHeight || 1,
+        };
+        frame.setPointerCapture(event.pointerId);
+        event.preventDefault();
+      });
+
+      frame.addEventListener('pointermove', function (event) {
+        if (!dragState || dragState.pointerId !== event.pointerId) {
+          return;
+        }
+
+        const deltaX = ((event.clientX - dragState.startClientX) / dragState.width) * 100;
+        const deltaY = ((event.clientY - dragState.startClientY) / dragState.height) * 100;
+        position.x = clamp(dragState.startX - deltaX);
+        position.y = clamp(dragState.startY - deltaY);
+        hideDragHint();
+        applyPosition();
+      });
+
+      frame.addEventListener('pointerup', stopDragging);
+      frame.addEventListener('pointercancel', stopDragging);
+    }
+  })();
+
   (function () {
     const toggleButtons = document.querySelectorAll('.password-toggle-btn');
 

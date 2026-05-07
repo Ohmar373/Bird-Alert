@@ -222,7 +222,7 @@
         </div>
 
         <!-- Visual area: image first, fallback to map -->
-        <div class="feed-card-visual">
+        <div class="feed-card-visual{% if sighting.image %} feed-card-visual--image{% endif %}">
           {% if sighting.image %}
             <img src="{{ sighting.image.url }}" alt="{{ sighting.bird_species.common_name }}" class="feed-card-image" />
             <div class="feed-card-map-toggle" data-id="{{ sighting.id }}" title="View on map">
