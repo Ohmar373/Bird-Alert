@@ -5,7 +5,7 @@ from django.contrib import messages
 from django.db.models import Count
 from django.shortcuts import get_object_or_404, redirect, render
 
-from sightings.models import Comment, Like, Sighting
+from sightings.models import Bookmark, Comment, Like, Sighting
 
 from .forms import UserForm, ProfileForm
 from .models import Profile
@@ -31,10 +31,24 @@ def _build_profile_context(profile_user):
         "comments_received": Comment.objects.filter(sighting__user=profile_user).count(),
     }
 
+    bookmarked_sightings = Sighting.objects.none()
+    if profile_user.is_authenticated:
+        bookmarked_sightings = (
+            Sighting.objects.filter(bookmark__user=profile_user)
+            .select_related("bird_species", "user")
+            .annotate(
+                like_count=Count("like", distinct=True),
+                comment_count=Count("comment", distinct=True),
+            )
+            .order_by("-bookmark__timestamp")
+        )
+        stats["bookmark_count"] = bookmarked_sightings.count()
+
     return {
         "profile": profile,
         "profile_user": profile_user,
         "sightings": sightings,
+        "bookmarked_sightings": bookmarked_sightings,
         "stats": stats,
     }
 
