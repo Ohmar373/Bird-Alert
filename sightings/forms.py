@@ -1,5 +1,6 @@
 from django import forms
 from .models import Sighting, BirdSpecies, BEHAVIOR_CHOICES
+from .upload_validation import validate_photo_upload
 
 class SightingForm(forms.ModelForm):
     bird_species = forms.CharField(
@@ -19,7 +20,7 @@ class SightingForm(forms.ModelForm):
             'longitude': forms.NumberInput(attrs={'type': 'hidden'}),
             'weather_conditions': forms.TextInput(attrs={'placeholder': 'e.g., Sunny, Cloudy, Rainy'}),
             'description': forms.Textarea(attrs={'rows': 4, 'placeholder': "Share what you observed — behavior, surroundings, anything that stood out..."}),
-            'image': forms.ClearableFileInput(attrs={'accept': 'image/*'}),
+            'image': forms.ClearableFileInput(attrs={'accept': 'image/jpeg,image/png,image/gif,image/webp'}),
             'count': forms.NumberInput(attrs={'min': '1', 'max': '9999', 'placeholder': '1'}),
             'behavior': forms.Select(choices=[('', 'Select behavior…')] + list(BEHAVIOR_CHOICES)),
         }
@@ -34,6 +35,11 @@ class SightingForm(forms.ModelForm):
             raise forms.ValidationError(f"Bird species '{bird_name}' not found in database.")
         except BirdSpecies.MultipleObjectsReturned:
             raise forms.ValidationError("Multiple species found. Please be more specific.")
+
+    def clean_image(self):
+        image = self.cleaned_data.get('image')
+        validate_photo_upload(image)
+        return image
     
     def save(self, commit=True):
         instance = super().save(commit=False)

@@ -3,12 +3,14 @@ from urllib.parse import quote
 
 import requests
 from django.contrib.auth.decorators import login_required
+from django.core.exceptions import ValidationError
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
 from sightings import utils
 from sightings.bird_detection import identify_bird_species
+from sightings.upload_validation import validate_photo_upload
 
 from .forms import SightingForm
 from .models import BIRD_CATEGORY_CHOICES, BirdSpecies, Comment, Like, Sighting, SightingReport
@@ -280,6 +282,7 @@ def detect_bird_species(request):
     
     try:
         image_file = request.FILES['image']
+        validate_photo_upload(image_file)
         
         # Identify bird species from image
         species_list = identify_bird_species(image_file)
@@ -296,6 +299,11 @@ def detect_bird_species(request):
             'species': species_list
         })
         
+    except ValidationError as e:
+        return JsonResponse({
+            'success': False,
+            'error': e.messages[0] if hasattr(e, "messages") else str(e)
+        }, status=400)
     except Exception as e:
         return JsonResponse({
             'success': False,

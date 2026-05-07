@@ -1,6 +1,8 @@
 from django.test import TestCase, Client
 from django.urls import reverse
 from django.contrib.auth.models import User
+from django.core.files.uploadedfile import SimpleUploadedFile
+from .forms import SightingForm
 from .models import BirdSpecies, Sighting, Like, Comment
 
 class ModelUnitTests(TestCase):
@@ -39,6 +41,37 @@ class ModelUnitTests(TestCase):
         comment = Comment.objects.create(user=self.user, sighting=self.sighting, text='Great photo!')
         self.assertEqual(Comment.objects.count(), 1)
         self.assertTrue('Comment by testuser' in str(comment))
+
+
+class SightingFormTests(TestCase):
+    def setUp(self):
+        self.bird, created = BirdSpecies.objects.get_or_create(
+            scientific_name='Cardinalis cardinalis',
+            defaults={
+                'common_name': 'Northern Cardinal',
+                'category': 'songbird'
+            }
+        )
+
+    def test_rejects_non_photo_upload(self):
+        upload = SimpleUploadedFile(
+            'payload.txt',
+            b'<script>alert("not a photo")</script>',
+            content_type='text/plain'
+        )
+        form = SightingForm(
+            data={
+                'bird_species': self.bird.common_name,
+                'latitude': '35.2271',
+                'longitude': '-80.8431',
+                'count': '1',
+                'behavior': '',
+            },
+            files={'image': upload}
+        )
+
+        self.assertFalse(form.is_valid())
+        self.assertIn('image', form.errors)
 
 
 class ViewIntegrationTests(TestCase):

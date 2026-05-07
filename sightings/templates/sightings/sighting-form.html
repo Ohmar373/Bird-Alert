@@ -87,6 +87,16 @@
               AI identification — work in progress. Results may not always be accurate.
             </p>
 
+            <p class="sf-gemini-notice">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                   stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="16" x2="12" y2="12"/>
+                <line x1="12" y1="8" x2="12.01" y2="8"/>
+              </svg>
+              Photos uploaded for identification are sent to the Google Gemini API. Avoid uploading photos with people or sensitive details.
+            </p>
+
             <label class="sf-detect-upload" id="detect-upload-label">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                    stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
@@ -95,7 +105,8 @@
                 <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/>
               </svg>
               <span id="detect-upload-text">Upload a photo to identify</span>
-              <input type="file" id="detect-image-input" accept="image/*">
+              <img id="detect-image-preview" class="sf-detect-preview" alt="Uploaded bird photo" style="display:none">
+              <input type="file" id="detect-image-input" accept="image/jpeg,image/png,image/gif,image/webp">
             </label>
 
             <div id="detect-loading" class="sf-detect-loading" style="display:none">
@@ -163,6 +174,11 @@
             Photo <span class="sf-optional">optional</span>
           </label>
           {{ form.image }}
+          <div id="photo-preview" class="sf-photo-preview" style="display:none">
+            <img id="photo-preview-img" alt="Selected sighting photo">
+            <button type="button" id="photo-preview-clear" class="sf-photo-clear">Remove photo</button>
+          </div>
+          <div id="photo-file-error" class="sf-field-error" style="display:none"></div>
           {% if form.image.errors %}<div class="sf-field-error">{{ form.image.errors }}</div>{% endif %}
         </div>
 
@@ -420,6 +436,22 @@
 
 .sf-hint-wip svg { flex-shrink: 0; margin-top: 1px; }
 
+.sf-gemini-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4rem;
+  font-size: 0.78rem;
+  color: #2563eb;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 6px;
+  padding: 0.5rem 0.65rem;
+  margin: 0;
+  line-height: 1.45;
+}
+
+.sf-gemini-notice svg { flex-shrink: 0; margin-top: 1px; }
+
 /* Upload area */
 .sf-detect-upload {
   display: flex;
@@ -443,6 +475,15 @@
 }
 
 .sf-detect-upload input { display: none; }
+
+.sf-detect-preview {
+  display: block;
+  width: 100%;
+  max-height: 180px;
+  object-fit: contain;
+  border-radius: 6px;
+  background: white;
+}
 
 /* Detection loading */
 .sf-detect-loading {
@@ -549,6 +590,35 @@
 
 #id_image { font-size: 0.85rem; color: #555; }
 
+.sf-photo-preview {
+  border: 1px solid #e8e5e0;
+  border-radius: 8px;
+  background: #faf8f3;
+  padding: 0.5rem;
+}
+
+.sf-photo-preview img {
+  display: block;
+  width: 100%;
+  max-height: 220px;
+  object-fit: contain;
+  border-radius: 6px;
+  background: white;
+}
+
+.sf-photo-clear {
+  margin-top: 0.45rem;
+  border: none;
+  background: transparent;
+  color: #777;
+  font: inherit;
+  font-size: 0.82rem;
+  cursor: pointer;
+  padding: 0.2rem 0;
+}
+
+.sf-photo-clear:hover { color: #c0392b; }
+
 .sf-field-error { font-size: 0.82rem; color: #c0392b; margin-top: 0.2rem; }
 
 /* Actions */
@@ -587,6 +657,15 @@
     const detectLoading = document.getElementById('detect-loading');
     const detectResults = document.getElementById('detect-results');
     const detectUploadText = document.getElementById('detect-upload-text');
+    const detectImagePreview = document.getElementById('detect-image-preview');
+    const photoInput = document.getElementById('{{ form.image.id_for_label }}');
+    const photoPreview = document.getElementById('photo-preview');
+    const photoPreviewImg = document.getElementById('photo-preview-img');
+    const photoPreviewClear = document.getElementById('photo-preview-clear');
+    const photoFileError = document.getElementById('photo-file-error');
+    const allowedPhotoTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    let detectPreviewUrl = null;
+    let photoPreviewUrl = null;
 
     hintToggle.addEventListener('click', () => {
         hintSection.classList.toggle('open');
@@ -594,7 +673,13 @@
 
     detectInput.addEventListener('change', function() {
         if (!this.files || !this.files[0]) return;
+        if (!validatePhotoFile(this.files[0], detectUploadText)) {
+            this.value = '';
+            clearDetectPhotoPreview();
+            return;
+        }
         detectUploadText.textContent = this.files[0].name;
+        showDetectPhotoPreview(this.files[0]);
         detectLoading.style.display = 'flex';
         detectResults.style.display = 'none';
         detectResults.innerHTML = '';
@@ -648,6 +733,87 @@
             detectResults.style.display = 'block';
         });
     });
+
+    function showDetectPhotoPreview(file) {
+        if (!detectImagePreview) return;
+        if (detectPreviewUrl) URL.revokeObjectURL(detectPreviewUrl);
+        detectPreviewUrl = URL.createObjectURL(file);
+        detectImagePreview.src = detectPreviewUrl;
+        detectImagePreview.style.display = 'block';
+    }
+
+    function clearDetectPhotoPreview() {
+        if (detectPreviewUrl) URL.revokeObjectURL(detectPreviewUrl);
+        detectPreviewUrl = null;
+        if (detectImagePreview) {
+            detectImagePreview.removeAttribute('src');
+            detectImagePreview.style.display = 'none';
+        }
+    }
+
+    if (photoInput) {
+        photoInput.addEventListener('change', function() {
+            if (!this.files || !this.files[0]) {
+                clearPhotoPreview();
+                return;
+            }
+
+            if (!validatePhotoFile(this.files[0], photoFileError)) {
+                this.value = '';
+                clearPhotoPreview();
+                return;
+            }
+
+            showPhotoPreview(this.files[0]);
+        });
+    }
+
+    if (photoPreviewClear) {
+        photoPreviewClear.addEventListener('click', () => {
+            if (photoInput) photoInput.value = '';
+            clearPhotoPreview();
+        });
+    }
+
+    function validatePhotoFile(file, errorTarget) {
+        if (allowedPhotoTypes.includes(file.type)) {
+            if (photoFileError) photoFileError.style.display = 'none';
+            return true;
+        }
+
+        const message = 'Please choose a JPEG, PNG, GIF, or WebP photo.';
+        if (errorTarget && errorTarget.id === 'photo-file-error') {
+            errorTarget.textContent = message;
+            errorTarget.style.display = 'block';
+        } else {
+            detectResults.innerHTML = `<p style="font-size:0.83rem;color:#c0392b;padding:0.25rem 0">${message}</p>`;
+            detectResults.style.display = 'block';
+        }
+        return false;
+    }
+
+    function showPhotoPreview(fileOrUrl) {
+        if (!photoPreview || !photoPreviewImg) return;
+        if (photoPreviewUrl) URL.revokeObjectURL(photoPreviewUrl);
+
+        if (typeof fileOrUrl === 'string') {
+            photoPreviewUrl = null;
+            photoPreviewImg.src = fileOrUrl;
+        } else {
+            photoPreviewUrl = URL.createObjectURL(fileOrUrl);
+            photoPreviewImg.src = photoPreviewUrl;
+        }
+
+        photoPreview.style.display = 'block';
+    }
+
+    function clearPhotoPreview() {
+        if (photoPreviewUrl) URL.revokeObjectURL(photoPreviewUrl);
+        photoPreviewUrl = null;
+        if (photoPreviewImg) photoPreviewImg.removeAttribute('src');
+        if (photoPreview) photoPreview.style.display = 'none';
+        if (photoFileError) photoFileError.style.display = 'none';
+    }
 
     function escapeText(v) {
         return String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -755,10 +921,7 @@
                 const dt = new DataTransfer();
                 dt.items.add(file);
                 input.files = dt.files;
-                const preview = document.createElement('img');
-                preview.src = imageData;
-                preview.style.cssText = 'max-height:72px; border-radius:6px; margin-top:0.5rem; display:block;';
-                input.parentNode.appendChild(preview);
+                showPhotoPreview(imageData);
             });
     });
 
