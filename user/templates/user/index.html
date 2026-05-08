@@ -198,7 +198,7 @@
   <div class="feed-container">
     <div class="feed-page-bar">
       <h1 class="feed-page-title">Feed</h1>
-      <a href="{% url 'add_sighting' %}" style="display:inline-block;padding:0.45rem 1rem;background:#1a1a1a;color:#fff;border-radius:7px;text-decoration:none;font-size:0.875rem;font-weight:600;">+ New Sighting</a>
+      <a href="{% url 'add_sighting' %}" style="display:inline-block;padding:0.45rem 1rem;background:#40916c;color:#fff;border-radius:7px;text-decoration:none;font-size:0.875rem;font-weight:600;">+ New Sighting</a>
     </div>
 
     {% if sightings %}
@@ -292,7 +292,7 @@
           <div class="feed-card-details">
             {% if sighting.weather_conditions %}
             <div class="feed-card-detail">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 15h4l3 6 4-12 3 6h4"/></svg>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
               <span>{{ sighting.weather_conditions }}</span>
             </div>
             {% endif %}
@@ -352,7 +352,7 @@
             {% if sp.image_url %}
               <img src="{{ sp.image_url }}" alt="{{ sp.bird_species__common_name }}">
             {% else %}
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 19.5 L1.5 23 L6 20.5 C8 22 11 23 14.5 22 C18.5 20.5 22 17.5 22 14 C22 11.5 21 9.5 21 9.5 L23 10.5 L21 12.5 C21 9 19 7 16.5 6.5 C14.5 6 12 6.5 12 6.5 C9.5 7 8 9 6.5 11.5 C5 14 4 16.5 2.5 19.5 Z"/></svg>
+              <img src="{% static 'img/birdIcon Transparent.png' %}" width="20" height="20" alt="" style="filter: brightness(0) invert(1); opacity: 0.7;">
             {% endif %}
           </div>
           <div class="sidebar-species-info">
@@ -413,7 +413,7 @@
             {% if sp.image_url %}
               <img src="{{ sp.image_url }}" alt="{{ sp.bird_species__common_name }}">
             {% else %}
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 19.5 L1.5 23 L6 20.5 C8 22 11 23 14.5 22 C18.5 20.5 22 17.5 22 14 C22 11.5 21 9.5 21 9.5 L23 10.5 L21 12.5 C21 9 19 7 16.5 6.5 C14.5 6 12 6.5 12 6.5 C9.5 7 8 9 6.5 11.5 C5 14 4 16.5 2.5 19.5 Z"/></svg>
+              <img src="{% static 'img/birdIcon Transparent.png' %}" width="20" height="20" alt="" style="filter: brightness(0) invert(1); opacity: 0.7;">
             {% endif %}
           </div>
           <div class="sidebar-species-info">
@@ -437,8 +437,7 @@
   <div class="lp-hero-overlay"></div>
   <div class="lp-hero-inner">
     <div class="lp-hero-content">
-      <span class="lp-hero-badge"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:5px"><path d="M2.5 19.5 L1.5 23 L6 20.5 C8 22 11 23 14.5 22 C18.5 20.5 22 17.5 22 14 C22 11.5 21 9.5 21 9.5 L23 10.5 L21 12.5 C21 9 19 7 16.5 6.5 C14.5 6 12 6.5 12 6.5 C9.5 7 8 9 6.5 11.5 C5 14 4 16.5 2.5 19.5 Z"/></svg>Community Bird Watching Platform</span>
-      <h1 class="lp-hero-title">Find Birds.<br>Share Discoveries.<br>Connect with Nature.</h1>
+<h1 class="lp-hero-title">Find Birds.<br>Share Discoveries.<br>Connect with Nature.</h1>
       <p class="lp-hero-subtitle">
         The community-powered platform for birders of all levels. Log sightings with GPS precision,
         identify species from 10,000+ database, and discover birds in proven locations near you.
@@ -457,7 +456,7 @@
   <div class="lp-container">
     <p class="lp-intro-text">
       BirdAlert connects birdwatchers to proven sighting locations, a massive species database,
-      and a vibrant community — all in one free platform.
+      and a vibrant community. All in one free platform.
     </p>
   </div>
 </div>
@@ -468,7 +467,7 @@
       <img src="{% static 'egret.jpg' %}" alt="Great Egret in the wild" loading="lazy">
       <div class="lp-gallery-label">
         <h3>Spot Rare Species</h3>
-        <p>From elegant egrets to migratory waterfowl — find them all</p>
+        <p>Egrets, waterfowl, raptors and more</p>
       </div>
     </div>
     <div class="lp-gallery-item">
@@ -482,7 +481,7 @@
       <img src="{% static 'bird-flowers.jpg' %}" alt="Bird among flowers" loading="lazy">
       <div class="lp-gallery-label">
         <h3>Discover Nature's Beauty</h3>
-        <p>Every sighting tells a story — share yours with the community</p>
+        <p>Log it, photo it, share it with the community</p>
       </div>
     </div>
   </div>
@@ -491,46 +490,57 @@
 <section class="lp-features" id="features">
   <div class="lp-container">
     <div class="lp-section-header">
-      <span class="lp-section-tag">Features</span>
-      <h2>Everything a Birder Needs</h2>
-      <p>Whether you're a casual observer or a serious enthusiast, BirdAlert has the tools to enhance every outing.</p>
+      <h2>Built for people who actually go outside</h2>
+      <p>Log what you see, where you saw it, and share it with people who care.</p>
     </div>
     <div class="lp-features-grid">
 
       <div class="lp-feature-card">
-        <div class="lp-feature-icon" style="background: #e8f5e9; color: #2d6a4f;">📍</div>
-        <h3>GPS Sighting Logs</h3>
-        <p>Pin exact locations on interactive maps. Return to proven spots where others have found rare birds and see community sightings in real time.</p>
+        <div class="lp-feature-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        </div>
+        <h3>Drop a pin, log a sighting</h3>
+        <p>Tap anywhere on the map to record exactly where you spotted a bird. Browse what others have logged nearby.</p>
       </div>
 
       <div class="lp-feature-card">
-        <div class="lp-feature-icon" style="background: #e3f2fd; color: #1565c0;">🔍</div>
-        <h3>Bird Identification</h3>
-        <p>Not sure what you saw? Search our database of 10,000+ species by name or description. Find the exact bird with common and scientific names.</p>
+        <div class="lp-feature-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        </div>
+        <h3>Attach a photo</h3>
+        <p>Upload a shot from the field. Good photos help others confirm the ID and make the sighting stick in the feed.</p>
       </div>
 
       <div class="lp-feature-card">
-        <div class="lp-feature-icon" style="background: #fff3e0; color: #e65100;">📸</div>
-        <h3>Photo Uploads</h3>
-        <p>Attach photos directly to your sightings. Capture the moment and help others identify species with visual evidence straight from the field.</p>
+        <div class="lp-feature-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+        </div>
+        <h3>Your personal BirddEx</h3>
+        <p>Every species you log gets added to your catalog. See what you've found, when you first found it, and how many are left.</p>
       </div>
 
       <div class="lp-feature-card">
-        <div class="lp-feature-icon" style="background: #fce4ec; color: #c62828;">❤️</div>
-        <h3>Likes & Comments</h3>
-        <p>Engage with the birding community. Like remarkable sightings, leave comments, and build lasting connections with fellow birdwatchers.</p>
+        <div class="lp-feature-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+        </div>
+        <h3>Community feed</h3>
+        <p>See what other birders spotted today. Like, comment, and follow up on interesting finds in your area.</p>
       </div>
 
       <div class="lp-feature-card">
-        <div class="lp-feature-icon" style="background: #f3e5f5; color: #6a1b9a;">🗺️</div>
-        <h3>Find Local Parks & Birds</h3>
-        <p>Sightings are automatically reverse-geocoded to display the nearest park, city, or natural area — helping you find proven birding locations.</p>
+        <div class="lp-feature-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        </div>
+        <h3>Search 10,000+ species</h3>
+        <p>Look up any bird by common or scientific name. Filter by category to narrow it down when you only remember the shape.</p>
       </div>
 
       <div class="lp-feature-card">
-        <div class="lp-feature-icon" style="background: #e8eaf6; color: #283593;">☁️</div>
-        <h3>Weather & Field Notes</h3>
-        <p>Record weather conditions alongside every sighting. Build a rich personal birding journal and understand patterns over time.</p>
+        <div class="lp-feature-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 15h4l3 6 4-12 3 6h4"/></svg>
+        </div>
+        <h3>Weather with every log</h3>
+        <p>Record conditions when you log a sighting. Over time you'll start to notice which weather actually brings birds out.</p>
       </div>
 
     </div>
@@ -542,13 +552,13 @@
     <div class="lp-section-header lp-section-header-light">
       <span class="lp-section-tag lp-tag-light">Simple</span>
       <h2>Get Started in Minutes</h2>
-      <p>No app download required. BirdAlert works right in your browser — completely free.</p>
+      <p>No app download required. BirdAlert works right in your browser, completely free.</p>
     </div>
     <div class="lp-steps">
       <div class="lp-step">
         <div class="lp-step-num">1</div>
         <h3>Create a Free Account</h3>
-        <p>Sign up in seconds with just a username and email. No payment, no subscription — free forever.</p>
+        <p>Just a username and email. No payment, no subscription, free forever.</p>
       </div>
       <div class="lp-step-arrow">→</div>
       <div class="lp-step">
@@ -641,7 +651,9 @@
   <div class="lp-container">
     <div class="lp-footer-grid">
       <div class="lp-footer-brand">
-        <div class="lp-footer-logo"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:5px"><path d="M2.5 19.5 L1.5 23 L6 20.5 C8 22 11 23 14.5 22 C18.5 20.5 22 17.5 22 14 C22 11.5 21 9.5 21 9.5 L23 10.5 L21 12.5 C21 9 19 7 16.5 6.5 C14.5 6 12 6.5 12 6.5 C9.5 7 8 9 6.5 11.5 C5 14 4 16.5 2.5 19.5 Z"/></svg>BirdAlert</div>
+        <div class="lp-footer-logo">
+          <img src="{% static 'img/birdIcon Transparent.png' %}" width="20" height="20" alt="" style="filter: brightness(0) invert(1); opacity: 0.9; vertical-align: middle; margin-right: 6px;">BirdAlert
+        </div>
         <p>The community bird watching platform for everyone. Find birds. Share discoveries. Connect with nature.</p>
       </div>
       <div class="lp-footer-links">

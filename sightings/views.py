@@ -52,6 +52,13 @@ def sighting_form(request):
 
         form = SightingForm(initial=initial_data)
 
+    location_name = None
+    if lat and lng:
+        try:
+            location_name = utils.get_location_name(float(lat), float(lng))
+        except (ValueError, TypeError):
+            pass
+
     return render(
         request,
         "sightings/sighting-form.html",
@@ -59,6 +66,7 @@ def sighting_form(request):
             "form": form,
             "lat": lat,
             "lng": lng,
+            "location_name": location_name,
         },
     )
 
