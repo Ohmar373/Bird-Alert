@@ -113,6 +113,18 @@ class ViewIntegrationTests(TestCase):
         self.assertEqual(len(data['results']), 1)
         self.assertEqual(data['results'][0]['common_name'], 'Northern Cardinal')
 
+    def test_sighting_form_includes_ai_reference_hover_preview(self):
+        self.client.login(username='testuser', password='password123')
+
+        response = self.client.get(reverse('sightings:sighting_form'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'sf-detect-reference')
+        self.assertContains(response, 'Reference photo')
+        self.assertContains(response, 'example_image_url')
+        self.assertContains(response, 'right: calc(100% + 0.75rem)')
+        self.assertContains(response, 'useDetectedPhotoForSightingPhoto')
+
     def test_like_sighting_api(self):
         self.client.login(username='testuser', password='password123')
         url = reverse('sightings:like_sighting', args=[self.sighting.id])
@@ -158,7 +170,7 @@ class ViewIntegrationTests(TestCase):
 
         response = self.client.get(reverse('profile:view'))
 
-        self.assertContains(response, 'Bookmarked Sightings')
+        self.assertContains(response, 'data-panel="saved"')
         self.assertContains(response, self.sighting.bird_species.common_name)
         self.assertContains(response, 'Saved')
 

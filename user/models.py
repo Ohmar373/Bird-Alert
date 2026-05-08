@@ -1,3 +1,3 @@
-from django.db import models
+from user.profile.models import Profile
 
-# Create your models here
+__all__ = ["Profile"]

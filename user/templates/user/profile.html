@@ -21,6 +21,13 @@
   overflow: hidden;
 }
 
+.profile-cover-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
 .profile-cover-pattern {
   position: absolute;
   inset: 0;
@@ -432,6 +439,9 @@
 
   <!-- ── Hero ─────────────────────────────────────────────────────────────── -->
   <div class="profile-cover">
+    {% if profile.banner %}
+      <img class="profile-cover-image" src="{{ profile.banner.url }}" alt="" style="object-position: {{ profile.banner_position_x|default_if_none:50 }}% {{ profile.banner_position_y|default_if_none:50 }}%;">
+    {% else %}
     <div class="profile-cover-pattern" aria-hidden="true">
       {% for i in "12345678901234567890123456" %}
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
@@ -439,6 +449,7 @@
       </svg>
       {% endfor %}
     </div>
+    {% endif %}
   </div>
 
   <div class="profile-body">

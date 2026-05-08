@@ -222,7 +222,7 @@
         </div>
 
         <!-- Visual area: image first, fallback to map -->
-        <div class="feed-card-visual">
+        <div class="feed-card-visual{% if sighting.image %} feed-card-visual--image{% endif %}">
           {% if sighting.image %}
             <img src="{{ sighting.image.url }}" alt="{{ sighting.bird_species.common_name }}" class="feed-card-image" />
             <div class="feed-card-map-toggle" data-id="{{ sighting.id }}" title="View on map">
@@ -675,7 +675,7 @@
   ];
 
   const birdIcon = L.divIcon({
-    html: `<div class="feed-bird-marker"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 19.5 L1.5 23 L6 20.5 C8 22 11 23 14.5 22 C18.5 20.5 22 17.5 22 14 C22 11.5 21 9.5 21 9.5 L23 10.5 L21 12.5 C21 9 19 7 16.5 6.5 C14.5 6 12 6.5 12 6.5 C9.5 7 8 9 6.5 11.5 C5 14 4 16.5 2.5 19.5 Z"/></svg></div>`,
+    html: `<div class="feed-bird-marker"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19.5h4.5l3.5-4.5 2.2 4.5"/><path d="M7 17.5 4.5 21H9"/><path d="M6 16.5 3.5 19.5h4"/><path d="M8 16.5c2.8.2 5.2-.7 6.7-3.1 1-1.6 1.2-3.5 1-5.3h3.8l-2.4-2.1c-.6-2.3-2.7-3.9-5.1-3.9-3 0-4.5 2-5.9 4.6L2.8 13c1.5 2.1 3 3.2 5.2 3.5Z"/><circle cx="13.8" cy="6.5" r=".8" fill="white" stroke="none"/></svg></div>`,
     className: '',
     iconSize: [26, 26],
     iconAnchor: [13, 26],
