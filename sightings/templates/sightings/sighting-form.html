@@ -433,6 +433,10 @@
   overflow: hidden;
 }
 
+.sf-hint.open {
+  overflow: visible;
+}
+
 .sf-hint-toggle {
   width: 100%;
   display: flex;
@@ -465,6 +469,7 @@
   gap: 0.75rem;
   padding: 0.9rem;
   border-top: 1px solid #e8e5e0;
+  position: relative;
 }
 
 .sf-hint.open .sf-hint-body { display: flex; }
@@ -573,11 +578,60 @@
   cursor: pointer;
   transition: border-color 0.15s, background 0.15s;
   background: white;
+  position: relative;
 }
 
 .sf-detect-result-item:hover {
   border-color: #52b788;
   background: #f0faf4;
+}
+
+.sf-detect-result-item.has-reference:hover,
+.sf-detect-result-item.has-reference:focus-within {
+  z-index: 5;
+}
+
+.sf-detect-reference {
+  position: absolute;
+  right: calc(100% + 0.75rem);
+  top: 50%;
+  transform: translateY(-50%) scale(0.96);
+  width: 230px;
+  min-height: 226px;
+  border-radius: 10px;
+  padding: 0.5rem;
+  background: white;
+  border: 1px solid #d8e5d6;
+  box-shadow: 0 10px 28px rgba(27, 67, 50, 0.18);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.16s ease, transform 0.16s ease, visibility 0.16s ease;
+}
+
+.sf-detect-result-item.has-reference:hover .sf-detect-reference,
+.sf-detect-result-item.has-reference:focus-within .sf-detect-reference {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(-50%) scale(1);
+}
+
+.sf-detect-reference img {
+  width: 100%;
+  height: 184px;
+  object-fit: contain;
+  display: block;
+  border-radius: 7px;
+  background: #f4f1ec;
+}
+
+.sf-detect-reference span {
+  display: block;
+  margin-top: 0.3rem;
+  color: #6d766d;
+  font-size: 0.68rem;
+  line-height: 1.2;
+  text-align: center;
 }
 
 .sf-detect-result-name { flex: 1; }
@@ -756,6 +810,16 @@
   .sf-grid { grid-template-columns: 1fr; }
   .sf-actions { justify-content: stretch; flex-direction: column-reverse; }
   .sf-btn-submit, .sf-btn-cancel { width: 100%; text-align: center; }
+
+  .sf-detect-reference {
+    right: 0.5rem;
+    width: 150px;
+    min-height: 138px;
+  }
+
+  .sf-detect-reference img {
+    height: 108px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -779,6 +843,7 @@
     const allowedPhotoTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
     let detectPreviewUrl = null;
     let photoPreviewUrl = null;
+    let detectedPhotoFile = null;
 
     hintToggle.addEventListener('click', () => {
         hintSection.classList.toggle('open');
@@ -788,9 +853,11 @@
         if (!this.files || !this.files[0]) return;
         if (!validatePhotoFile(this.files[0], detectUploadText)) {
             this.value = '';
+            detectedPhotoFile = null;
             clearDetectPhotoPreview();
             return;
         }
+        detectedPhotoFile = this.files[0];
         detectUploadText.textContent = this.files[0].name;
         showDetectPhotoPreview(this.files[0]);
         detectLoading.style.display = 'flex';
@@ -814,8 +881,9 @@
             }
             data.species.slice(0, 5).forEach(sp => {
                 const pct = Math.round((sp.confidence || 0) * 100);
+                const exampleImageUrl = sp.example_image_url ? escapeText(sp.example_image_url) : '';
                 const item = document.createElement('div');
-                item.className = 'sf-detect-result-item';
+                item.className = `sf-detect-result-item${exampleImageUrl ? ' has-reference' : ''}`;
                 item.innerHTML = `
                     <div class="sf-detect-result-name">
                         <strong>${escapeText(sp.common_name)}</strong>
@@ -826,10 +894,16 @@
                         <div class="sf-detect-conf-bar">
                             <div class="sf-detect-conf-fill" style="width:${pct}%"></div>
                         </div>
-                    </div>`;
+                    </div>
+                    ${exampleImageUrl ? `
+                    <div class="sf-detect-reference" aria-hidden="true">
+                        <img src="${exampleImageUrl}" alt="">
+                        <span>Reference photo</span>
+                    </div>` : ''}`;
                 item.addEventListener('click', () => {
                     birdInput.value = sp.common_name;
                     if (sp.category) pendingCategory = sp.category;
+                    useDetectedPhotoForSightingPhoto();
                     hintSection.classList.remove('open');
                     birdInput.focus();
                     const banner = document.getElementById('sf-detected-banner');
@@ -858,6 +932,7 @@
     function clearDetectPhotoPreview() {
         if (detectPreviewUrl) URL.revokeObjectURL(detectPreviewUrl);
         detectPreviewUrl = null;
+        detectedPhotoFile = null;
         if (detectImagePreview) {
             detectImagePreview.removeAttribute('src');
             detectImagePreview.style.display = 'none';
@@ -1075,6 +1150,16 @@
             photoPreview.style.display  = 'block';
         };
         reader.readAsDataURL(file);
+    }
+
+    function useDetectedPhotoForSightingPhoto() {
+        const file = detectedPhotoFile || (detectInput.files && detectInput.files[0]);
+        if (!file || !photoInput) return;
+
+        const dt = new DataTransfer();
+        dt.items.add(file);
+        photoInput.files = dt.files;
+        showPhotoPreview(file);
     }
 
     photoDropzone.addEventListener('click', () => photoInput.click());
